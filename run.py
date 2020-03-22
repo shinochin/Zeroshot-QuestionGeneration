@@ -135,8 +135,8 @@ if isbaseline:
 else:
     model = TripleText2SeqModel(config)
 
-print "Start Training model %s " % model_name
-print "\n-----------------------\n"
+print("Start Training model %s " % model_name)
+print("\n-----------------------\n")
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -244,8 +244,8 @@ with tf.Session() as sess:
                 pred = data.inv_propertyvocab[i[1]]
                 obj = data.inv_entityvocab[i[2]]
 
-                y = " ".join([data.inv_wordvocab[i] for i in np.squeeze(predicted_ids[c], axis=1)]).decode("utf-8")
-                y_label = " ".join([data.inv_wordvocab[i] for i in decoder_inputs[c]]).decode("utf-8")
+                y = " ".join([data.inv_wordvocab[i] for i in np.squeeze(predicted_ids[c], axis=1)])
+                y_label = " ".join([data.inv_wordvocab[i] for i in decoder_inputs[c]])
 
                 y_post_proc = post_process(y, meta["placeholder_dict"][c])
                 y_label_post_proc = post_process(y_label, meta["placeholder_dict"][c])
@@ -293,5 +293,5 @@ with tf.Session() as sess:
         with open(args.logfile, 'a+') as f:
             f.write("\n------------\n")
             for k in s:
-                print "%s \t %s" % (k[0], k[1])
+                print("%s \t %s" % (k[0], k[1]))
                 f.write("%s \t %s\n" % (k[0], k[1]))

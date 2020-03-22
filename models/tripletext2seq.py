@@ -179,7 +179,7 @@ class TripleText2SeqModel():
             # Create Word Embeddings Weights
             if self.config.USE_PRETRAINED_WORD_EMBEDDINGS:
 
-                word_emb = pickle.load(open(self.config.PRETRAINED_WORD_EMBEDDINGS_PATH)).astype(np.float32)
+                word_emb = pickle.load(open(self.config.PRETRAINED_WORD_EMBEDDINGS_PATH, "rb")).astype(np.float32)
                 self.encoder_word_embeddings = tf.Variable(word_emb, name="encoder_word_embeddings",
                                                            trainable=self.config.TRAIN_WORD_EMBEDDINGS)
 

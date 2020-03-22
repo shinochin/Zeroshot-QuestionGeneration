@@ -149,8 +149,8 @@ for tid, d in enumerate(testdatafeed):
         pred = data.inv_propertyvocab[i[1]]
         obj = data.inv_entityvocab[i[2]]
 
-        y = " ".join([data.inv_wordvocab[i] for i in predicted_ids[c]]).decode("utf-8")
-        y_label = " ".join([data.inv_wordvocab[i] for i in decoder_inputs[c]]).decode("utf-8")
+        y = " ".join([data.inv_wordvocab[i] for i in predicted_ids[c]])
+        y_label = " ".join([data.inv_wordvocab[i] for i in decoder_inputs[c]])
 
         y_post_proc = post_process(y, meta["placeholder_dict"][c])
         y_label_post_proc = post_process(y_label, meta["placeholder_dict"][c])
