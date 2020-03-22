@@ -80,13 +80,13 @@ class Config():
 
 
             # Types: a.k.a Words
-            self.USE_PRETRAINED_WORD_EMBEDDINGS = False
+            self.USE_PRETRAINED_WORD_EMBEDDINGS = True
             self.NUMBER_OF_TEXTUAL_EVIDENCES = 3   # Subject type, Object Type, Predicate Type
 
             if self.USE_PRETRAINED_WORD_EMBEDDINGS:
 
                 self.PRETRAINED_WORD_EMBEDDINGS_PATH = "./data/wordembeddings/glove100d.pkl"
-                self.TYPES_ENCODER_VOCAB, self.TYPES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_WORD_EMBEDDINGS_PATH)).shape
+                self.TYPES_ENCODER_VOCAB, self.TYPES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_WORD_EMBEDDINGS_PATH, 'rb')).shape
                 self.TRAIN_WORD_EMBEDDINGS = True
 
             else:
@@ -105,7 +105,9 @@ class Config():
                 self.DECODER_EMBEDDING_SIZE = 50
                 self.DECODER_VOCAB_SIZE = len(data.wordvocab)  # Size of the decoding vocabulary
 
+            self.ENCODER_RNN_CELL_TYPE = ''
 
+            self.INPUT_SEQ_RNN_HIDDEN_SIZE = 200
             self.DECODER_RNN_HIDDEN_SIZE = 500
 
             # Attention:
