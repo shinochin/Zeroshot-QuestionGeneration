@@ -40,9 +40,6 @@ class TripleText2SeqModel():
 
         self.mode = mode
         self.config = config
-
-        self.__create_encoder()
-        self.__create_decoder()
         self.init = self.__helper__initializer()
 
     def __create_placeholders(self):
@@ -134,7 +131,7 @@ class TripleText2SeqModel():
                 self.init([self.config.ENTITIES_VOCAB, self.config.ENTITIES_EMBEDDING_SIZE]),
                 name="entities_embeddings",
                 dtype=tf.float32)
-            self.encoder_predicates_embeddings = tf.get_variable(
+            self.encoder_predicates_embeddings = tf.Variable(
                 self.init([self.config.PREDICATES_VOCAB, self.config.PREDICATES_EMBEDDING_SIZE]),
                 name="predicates_embeddings",
                 dtype=tf.float32)
@@ -265,7 +262,6 @@ class TripleText2SeqModel():
 
         self.decoder_initial_state = (decoder_hidden_state_reshape(self.encoder_last_state), )
 
-
     def __create_decoder_attention_cell_old(self):
         """
         create decoder RNN with attention
@@ -310,7 +306,6 @@ class TripleText2SeqModel():
 
         # a tuple because decode initial state has to take a tuple
         self.decoder_initial_state = (init_state,)
-
 
     def __create_decoder_attention_cell(self):
         """
@@ -517,18 +512,20 @@ class TripleText2SeqModel():
 
     def __helper__initializer(self):
         sqrt3 = math.sqrt(3)  # Uniform(-sqrt(3), sqrt(3)) has variance=1.
-        initializer = tf.random_uniform_initializer(-sqrt3, sqrt3, dtype=tf.float32)
+        initializer = tf.random_uniform_initializer(-sqrt3, sqrt3)
         return initializer
 
     def compute_loss(self, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
-        self.encoder_entities_inputs = encoder_triples_inputs[:, [0, 2]],  # pick up subjects and objects
-        self.encoder_predicates_inputs = encoder_triples_inputs[:, [1]],  # pick up predicates
-        self.encoder_text_inputs = encoder_text_inputs,
-        self.encoder_text_inputs_length = encoder_text_inputs_length,
-        self.decoder_inputs = decoder_inputs,
-        self.decoder_inputs_length = decoder_inputs_lengths,
+        self.encoder_entities_inputs = encoder_triples_inputs[:, [0, 2]]  # pick up subjects and objects
+        self.encoder_predicates_inputs = encoder_triples_inputs[:, [1]]  # pick up predicates
+        self.encoder_text_inputs = encoder_text_inputs
+        self.encoder_text_inputs_length = encoder_text_inputs_length
+        self.decoder_inputs = decoder_inputs
+        self.decoder_inputs_length = decoder_inputs_lengths
         self.encoder_predicates_direction = encoder_predicates_direction
         self.__create_placeholders()
+        self.__create_encoder()
+        self.__create_decoder()
         return self.__create_loss()
 
     def train(self, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
