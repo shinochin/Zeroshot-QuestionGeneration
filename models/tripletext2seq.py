@@ -210,8 +210,8 @@ class TripleText2SeqModel():
                         cell=self.encoder_cell[i],
                         return_sequences=True,
                         return_state=True,
-                        inputs=self.encoder_text_inputs_embedded[i],
-                        sequence_length=self.encoder_text_inputs_length[i],
+                        # inputs=self.encoder_text_inputs_embedded[i],
+                        # sequence_length=self.encoder_text_inputs_length[i],
                         dtype=tf.float32)
 
                     self.encoder_text_outputs.append(out)
