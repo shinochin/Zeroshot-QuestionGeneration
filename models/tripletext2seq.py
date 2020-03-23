@@ -518,10 +518,10 @@ class TripleText2SeqModel():
     def compute_loss(self, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
         self.encoder_entities_inputs = encoder_triples_inputs[:, [0, 2]]  # pick up subjects and objects
         self.encoder_predicates_inputs = encoder_triples_inputs[:, [1]]  # pick up predicates
-        self.encoder_text_inputs = encoder_text_inputs
-        self.encoder_text_inputs_length = encoder_text_inputs_length
-        self.decoder_inputs = decoder_inputs
-        self.decoder_inputs_length = decoder_inputs_lengths
+        self.encoder_text_inputs = encoder_text_inputs.astype(np.int32)
+        self.encoder_text_inputs_length = encoder_text_inputs_length.astype(np.int32)
+        self.decoder_inputs = decoder_inputs.astype(np.int32)
+        self.decoder_inputs_length = decoder_inputs_lengths.astype(np.int32)
         self.encoder_predicates_direction = encoder_predicates_direction.astype(np.float32)
         self.__create_placeholders()
         self.__create_encoder()
