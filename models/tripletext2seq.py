@@ -202,16 +202,17 @@ class TripleText2SeqModel():
         if "bi" not in self.config.ENCODER_RNN_CELL_TYPE:
                 for _ in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
                     #rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
-                    self.encoder_cell.append(tf.nn.rnn_cell.MultiRNNCell([rnn] * self.config.NUM_LAYERS))
+                    self.encoder_cell.append(tf.keras.layers.StackedRNNCells([rnn] * self.config.NUM_LAYERS))
 
                 for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
 
-                    out, state = tf.nn.dynamic_rnn(
+                    out, state = tf.keras.layers.RNN(
                         cell=self.encoder_cell[i],
+                        return_sequences=True,
+                        return_state=True,
                         inputs=self.encoder_text_inputs_embedded[i],
                         sequence_length=self.encoder_text_inputs_length[i],
-                        dtype=tf.float32
-                    )
+                        dtype=tf.float32)
 
                     self.encoder_text_outputs.append(out)
                     self.encoder_text_last_state.append(tf.squeeze(state, axis=0))
@@ -291,7 +292,7 @@ class TripleText2SeqModel():
             name="Attention_Wrapper"
         )
 
-        self.decoder_cell = tf.nn.rnn_cell.MultiRNNCell(self.decoder_cell_list)
+        self.decoder_cell = tf.keras.layers.StackedRNNCells(self.decoder_cell_list)
 
         # To be compatible with AttentionWrapper, the encoder last state
         # of the top layer should be converted into the AttentionWrapperState form
@@ -348,7 +349,7 @@ class TripleText2SeqModel():
             name="Attention_Wrapper"
         )
 
-        self.decoder_cell = tf.nn.rnn_cell.MultiRNNCell(self.decoder_cell_list)
+        self.decoder_cell = tf.keras.layers.StackedRNNCells(self.decoder_cell_list)
 
         # To be compatible with AttentionWrapper, the encoder last state
         # of the top layer should be converted into the AttentionWrapperState form
