@@ -41,7 +41,6 @@ class TripleText2SeqModel():
         self.mode = mode
         self.config = config
 
-        self.__create_placeholders()
         self.__create_encoder()
         self.__create_decoder()
 
@@ -59,9 +58,9 @@ class TripleText2SeqModel():
 
         # The input triple is given in the form of list of entities [sub,obj] and list of predicates [pred]
         # This design allows also inputting multiple triples at once since order matters [s1,s2,o1,o2] [p1,p2]
-        self.encoder_entities_inputs = tf.placeholder(tf.int32, shape=[None, self.config.ENTITIESLENGTH], name="encoder_entities_inputs")
-        self.encoder_predicates_inputs = tf.placeholder(tf.int32, shape=[None, self.config.PREDICATESLENGTH], name="encoder_predicates_inputs")
-        self.encoder_predicates_direction = tf.placeholder(tf.float32, shape=[None], name="encoder_predicates_direction")
+        # self.encoder_entities_inputs = tf.placeholder(tf.int32, shape=[None, self.config.ENTITIESLENGTH], name="encoder_entities_inputs")
+        # self.encoder_predicates_inputs = tf.placeholder(tf.int32, shape=[None, self.config.PREDICATESLENGTH], name="encoder_predicates_inputs")
+        # self.encoder_predicates_direction = tf.placeholder(tf.float32, shape=[None], name="encoder_predicates_direction")
 
         # Input Sequences
         # textual evidences = input sequences
@@ -69,22 +68,22 @@ class TripleText2SeqModel():
 
         # input sequences with padding
         # :size =  NUMBER_OF_TEXTUAL_EVIDENCES x BATCHSIZE x input sequence max length
-        self.encoder_text_inputs = tf.placeholder(dtype=tf.int32, shape=[self.config.NUMBER_OF_TEXTUAL_EVIDENCES, None, None], name='encoder_text_inputs')
+        # self.encoder_text_inputs = tf.placeholder(dtype=tf.int32, shape=[self.config.NUMBER_OF_TEXTUAL_EVIDENCES, None, None], name='encoder_text_inputs')
         # actual lengths of each input sequence
         # :size =  NUMBER_OF_TEXTUAL_EVIDENCES x 1
         # each batch has a fixed input sequence length
-        self.encoder_text_inputs_length = tf.placeholder(dtype=tf.int32, shape=[self.config.NUMBER_OF_TEXTUAL_EVIDENCES, None], name='encoder_text_inputs_length')
+        # self.encoder_text_inputs_length = tf.placeholder(dtype=tf.int32, shape=[self.config.NUMBER_OF_TEXTUAL_EVIDENCES, None], name='encoder_text_inputs_length')
 
-        self.batch_size = tf.shape(self.encoder_entities_inputs)[0]
+        # self.batch_size = tf.shape(self.encoder_entities_inputs)[0]
 
         # Decoder placeholders:
         # these are the raw inputs to the decoder same as input sequences
         # output sequence with padding
         # :size =  BATCHSIZE x output sequence max length
-        self.decoder_inputs = tf.placeholder(tf.int32, shape=[None, None], name="decoder_inputs")
+        # self.decoder_inputs = tf.placeholder(tf.int32, shape=[None, None], name="decoder_inputs")
         # number indicating actual lengths of the output sequence
         # :size =  BATCHSIZE x 1
-        self.decoder_inputs_length = tf.placeholder(dtype=tf.int32, shape=(None,), name='decoder_inputs_length')
+        # self.decoder_inputs_length = tf.placeholder(dtype=tf.int32, shape=(None,), name='decoder_inputs_length')
 
         if self.mode == "training":
 
@@ -111,10 +110,6 @@ class TripleText2SeqModel():
     def __build_single_rnn_cell(self, hidden_size):
 
         cell = tf.nn.rnn_cell.GRUCell(hidden_size)
-
-        # if self.use_dropout:
-        #     cell = DropoutWrapper(cell, dtype=self.dtype,
-        #                           output_keep_prob=self.keep_prob_placeholder, )
 
         return cell
 
@@ -535,20 +530,19 @@ class TripleText2SeqModel():
         initializer = tf.random_uniform_initializer(-sqrt3, sqrt3, dtype=tf.float32)
         return initializer
 
-    def train(self, sess, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
+    def compute_loss(self, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
+        self.encoder_entities_inputs = encoder_triples_inputs[:, [0, 2]],  # pick up subjects and objects
+        self.encoder_predicates_inputs = encoder_triples_inputs[:, [1]],  # pick up predicates
+        self.encoder_text_inputs = encoder_text_inputs,
+        self.encoder_text_inputs_length = encoder_text_inputs_length,
+        self.decoder_inputs = decoder_inputs,
+        self.decoder_inputs_length = decoder_inputs_lengths,
+        self.encoder_predicates_direction = encoder_predicates_direction
+        self.__create_placeholders()
+        return self.__create_loss()
 
-        feed_dict = {
-            # self.encoder_triples_inputs: encoder_triples_inputs,
-            self.encoder_entities_inputs: encoder_triples_inputs[:, [0, 2]],  # pick up subjects and objects
-            self.encoder_predicates_inputs: encoder_triples_inputs[:, [1]],  # pick up predicates
-            self.encoder_text_inputs: encoder_text_inputs,
-            self.encoder_text_inputs_length: encoder_text_inputs_length,
-            self.decoder_inputs: decoder_inputs,
-            self.decoder_inputs_length: decoder_inputs_lengths,
-            self.encoder_predicates_direction: encoder_predicates_direction
-        }
-        _, loss = sess.run([self.updates, self.loss], feed_dict=feed_dict)
-
+    def train(self, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
+        loss = self.compute_loss(encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction)
         return loss
 
     def eval(self, sess, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
