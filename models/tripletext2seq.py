@@ -356,7 +356,7 @@ class TripleText2SeqModel():
 
         # self.decoder_initial_state = self.encoder_last_state
 
-        init_state = self.decoder_cell_list[-1].zero_state(
+        init_state = self.decoder_cell_list[-1].get_initial_state(
             batch_size=self.batch_size,
             dtype=tf.float32
         )
