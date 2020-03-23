@@ -107,7 +107,7 @@ class TripleText2SeqModel():
 
     def __build_single_rnn_cell(self, hidden_size):
 
-        cell = tf.nn.rnn_cell.GRUCell(hidden_size)
+        cell = tf.keras.layers.GRUCell(hidden_size)
 
         return cell
 
@@ -255,7 +255,7 @@ class TripleText2SeqModel():
 
     def __create_decoder_cell(self):
 
-        self.decoder_cell = tf.nn.rnn_cell.GRUCell(self.config.DECODER_RNN_HIDDEN_SIZE)
+        self.decoder_cell = tf.keras.layers.GRUCell(self.config.DECODER_RNN_HIDDEN_SIZE)
 
         # fully connected layer to change size of Encoder Last state to Decoder Hidden size
         decoder_hidden_state_reshape = Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
