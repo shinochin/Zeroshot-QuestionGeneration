@@ -40,10 +40,9 @@ class TripleText2SeqModel():
 
         self.mode = mode
         self.config = config
-
+        self.init = self.__helper__initializer()
         self.__create_encoder()
         self.__create_decoder()
-        self.init = self.__helper__initializer()
 
     def __create_placeholders(self):
         """
