@@ -522,7 +522,7 @@ class TripleText2SeqModel():
         self.encoder_text_inputs_length = encoder_text_inputs_length
         self.decoder_inputs = decoder_inputs
         self.decoder_inputs_length = decoder_inputs_lengths
-        self.encoder_predicates_direction = encoder_predicates_direction.astype(tf.float32)
+        self.encoder_predicates_direction = encoder_predicates_direction.astype(np.float32)
         self.__create_placeholders()
         self.__create_encoder()
         self.__create_decoder()
