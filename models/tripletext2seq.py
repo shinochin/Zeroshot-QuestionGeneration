@@ -316,7 +316,7 @@ class TripleText2SeqModel():
         triple_memory = self.encoder_triples_inputs_embedded
 
         self.triple_attention_mechanism = tfa.seq2seq.BahdanauAttention(
-            num_units=self.config.TRIPLES_EMBEDDING_SIZE,    # the depth of the Attention layer
+            units=self.config.TRIPLES_EMBEDDING_SIZE,    # the depth of the Attention layer
             memory=triple_memory,
             name="TripleAttention"
         )
@@ -324,7 +324,7 @@ class TripleText2SeqModel():
         context_memory = tf.concat(self.encoder_text_outputs, axis=1)
 
         self.context_attention_mechanism = tfa.BahdanauAttention(
-            num_units=self.config.INPUT_SEQ_RNN_HIDDEN_SIZE if "bi" not in self.config.ENCODER_RNN_CELL_TYPE
+            units=self.config.INPUT_SEQ_RNN_HIDDEN_SIZE if "bi" not in self.config.ENCODER_RNN_CELL_TYPE
             else self.config.INPUT_SEQ_RNN_HIDDEN_SIZE * 2,    # the depth of the Attention layer
             memory=context_memory,
             name="ContextAttention"
