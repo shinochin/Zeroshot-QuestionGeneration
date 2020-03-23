@@ -133,7 +133,7 @@ class TripleText2SeqModel():
                 self.init([self.config.ENTITIES_VOCAB, self.config.ENTITIES_EMBEDDING_SIZE]),
                 name="entities_embeddings",
                 dtype=tf.float32)
-            self.encoder_predicates_embeddings = tf.get_variable(
+            self.encoder_predicates_embeddings = tf.Variable(
                 self.init([self.config.PREDICATES_VOCAB, self.config.PREDICATES_EMBEDDING_SIZE]),
                 name="predicates_embeddings",
                 dtype=tf.float32)
