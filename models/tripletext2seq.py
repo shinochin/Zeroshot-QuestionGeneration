@@ -4,6 +4,7 @@ import math
 import pickle
 
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.python.layers.core import Dense
 import numpy as np
 
@@ -314,7 +315,7 @@ class TripleText2SeqModel():
 
         triple_memory = self.encoder_triples_inputs_embedded
 
-        self.triple_attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
+        self.triple_attention_mechanism = tfa.seq2seq.BahdanauAttention(
             num_units=self.config.TRIPLES_EMBEDDING_SIZE,    # the depth of the Attention layer
             memory=triple_memory,
             name="TripleAttention"
