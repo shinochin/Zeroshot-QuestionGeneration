@@ -138,43 +138,40 @@ else:
 print("Start Training model %s " % model_name)
 print("\n-----------------------\n")
 
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
+iterator = traindatafeed
 
-    iterator = traindatafeed
+for d in iterator:
 
-    for d in iterator:
+    encoder_triples_inputs, encoder_subtypes_inputs, encoder_subtypes_inputs_length, encoder_objtypes_inputs, encoder_objtypes_inputs_length, encoder_dep_inputs, encoder_dep_length, decoder_inputs, decoder_inputs_lengths, direction, meta = d
 
-        encoder_triples_inputs, encoder_subtypes_inputs, encoder_subtypes_inputs_length, encoder_objtypes_inputs, encoder_objtypes_inputs_length, encoder_dep_inputs, encoder_dep_length, decoder_inputs, decoder_inputs_lengths, direction, meta = d
+    if isbaseline:
 
-        if isbaseline:
+        loss = model.train(encoder_triples_inputs, decoder_inputs, decoder_inputs_lengths, direction)
+    else:
 
-            loss = model.train(sess, encoder_triples_inputs, decoder_inputs, decoder_inputs_lengths, direction)
-        else:
+        encoder_text_inputs = []
+        encoder_text_inputs_length = []
+        if args.subtype:
+            encoder_text_inputs.append(encoder_subtypes_inputs)
+            encoder_text_inputs_length.append(encoder_subtypes_inputs_length)
+        if args.objtype:
+            encoder_text_inputs.append(encoder_objtypes_inputs)
+            encoder_text_inputs_length.append(encoder_objtypes_inputs_length)
+        if args.pred:
+            encoder_text_inputs.append(encoder_dep_inputs)
+            encoder_text_inputs_length.append(encoder_dep_length)
 
-            encoder_text_inputs = []
-            encoder_text_inputs_length = []
-            if args.subtype:
-                encoder_text_inputs.append(encoder_subtypes_inputs)
-                encoder_text_inputs_length.append(encoder_subtypes_inputs_length)
-            if args.objtype:
-                encoder_text_inputs.append(encoder_objtypes_inputs)
-                encoder_text_inputs_length.append(encoder_objtypes_inputs_length)
-            if args.pred:
-                encoder_text_inputs.append(encoder_dep_inputs)
-                encoder_text_inputs_length.append(encoder_dep_length)
+        loss = model.train(encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, direction)
 
-            loss = model.train(sess, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, direction)
+    if model.global_step.eval() % config.LOG_FREQUENCY == 0:
+        print("Global Step %s Epoch %s  Batch %s \t Loss = %s" % (model.global_step.eval(), meta["epoch"], meta["batch_id"], np.mean(loss)))
 
-        if model.global_step.eval() % config.LOG_FREQUENCY == 0:
-            print("Global Step %s Epoch %s  Batch %s \t Loss = %s" % (model.global_step.eval(), meta["epoch"], meta["batch_id"], np.mean(loss)))
+    # Save the model checkpoint
+    if model.global_step.eval() % config.SAVE_FREQUENCY == 0:
 
-        # Save the model checkpoint
-        if model.global_step.eval() % config.SAVE_FREQUENCY == 0:
-
-            print('Saving the model..')
-            checkpoint_path = os.path.join(config.CHECKPOINTS_PATH)
-            path = model.save(sess, checkpoint_path, global_step=model.global_step)
+        print('Saving the model..')
+        checkpoint_path = os.path.join(config.CHECKPOINTS_PATH)
+        path = model.save(checkpoint_path, global_step=model.global_step)
 
 ###########
 # testing #
@@ -200,98 +197,97 @@ def post_process(s, d):
 
     return s
 
-with tf.Session() as sess:
 
-    if tf.train.checkpoint_exists(tf.train.latest_checkpoint(os.path.dirname(config.CHECKPOINTS_PATH))):
-        print('reloading the trained model')
+if tf.train.checkpoint_exists(tf.train.latest_checkpoint(os.path.dirname(config.CHECKPOINTS_PATH))):
+    print('reloading the trained model')
 
-        model.restore(sess=sess, path=tf.train.latest_checkpoint(os.path.dirname(config.CHECKPOINTS_PATH)))
+    model.restore(path=tf.train.latest_checkpoint(os.path.dirname(config.CHECKPOINTS_PATH)))
 
-        predicted = []
-        labels = []
+    predicted = []
+    labels = []
 
-        iterator = testdatafeed
+    iterator = testdatafeed
 
-        for d in iterator:
+    for d in iterator:
 
-            encoder_triples_inputs, encoder_subtypes_inputs, encoder_subtypes_inputs_length, encoder_objtypes_inputs, encoder_objtypes_inputs_length, encoder_dep_inputs, encoder_dep_length, decoder_inputs, decoder_inputs_lengths, direction, meta = d
+        encoder_triples_inputs, encoder_subtypes_inputs, encoder_subtypes_inputs_length, encoder_objtypes_inputs, encoder_objtypes_inputs_length, encoder_dep_inputs, encoder_dep_length, decoder_inputs, decoder_inputs_lengths, direction, meta = d
 
-            if isbaseline:
-                predicted_ids = model.predict(sess, encoder_triples_inputs=encoder_triples_inputs,
-                                              encoder_predicates_direction=direction)
-            else:
-
-                encoder_text_inputs = []
-                encoder_text_inputs_length = []
-                if args.subtype:
-                    encoder_text_inputs.append(encoder_subtypes_inputs)
-                    encoder_text_inputs_length.append(encoder_subtypes_inputs_length)
-                if args.objtype:
-                    encoder_text_inputs.append(encoder_objtypes_inputs)
-                    encoder_text_inputs_length.append(encoder_objtypes_inputs_length)
-                if args.pred:
-                    encoder_text_inputs.append(encoder_dep_inputs)
-                    encoder_text_inputs_length.append(encoder_dep_length)
-
-                predicted_ids = model.predict(sess, encoder_triples_inputs=encoder_triples_inputs,
-                                              encoder_text_inputs=encoder_text_inputs,
-                                              encoder_text_inputs_length=encoder_text_inputs_length,
-                                              encoder_predicates_direction=direction)
-
-            for c, i in enumerate(encoder_triples_inputs):
-
-                sub = data.inv_entityvocab[i[0]]
-                pred = data.inv_propertyvocab[i[1]]
-                obj = data.inv_entityvocab[i[2]]
-
-                y = " ".join([data.inv_wordvocab[i] for i in np.squeeze(predicted_ids[c], axis=1)])
-                y_label = " ".join([data.inv_wordvocab[i] for i in decoder_inputs[c]])
-
-                y_post_proc = post_process(y, meta["placeholder_dict"][c])
-                y_label_post_proc = post_process(y_label, meta["placeholder_dict"][c])
-
-                subtype = " ".join([data.inv_wordvocab[i] for i in encoder_subtypes_inputs[c]])
-                objtype = " ".join([data.inv_wordvocab[i] for i in encoder_objtypes_inputs[c]])
-                dep = " ".join([data.inv_wordvocab[i] for i in encoder_dep_inputs[c]])
-
-                results.append([sub, pred, obj, subtype, objtype, dep, y, y_label, y_post_proc, y_label_post_proc])
-
-                predicted.append(y)
-                labels.append(y_label)
-
-        results_df = pd.DataFrame(results, columns=["sub", "pred", "obj", "subtype", "objtype", "dep", "y", "y_label", "y_post_proc", "y_label_post_proc"])
-        results_df.to_csv(args.out, encoding="utf-8")
-
-        # remove start
-        predicted = [" ".join(i.split()[:-1]).encode('ascii', 'ignore') for i in predicted]
-        labels = [" ".join(i.split()[1:-1]).encode('ascii', 'ignore') for i in labels]
-        e = Evaluator(predicted, labels)
-        e.evaluate()
-
-        s = list()
-        s.append(("model_Name", model_name))
-        s.append(("DECODER_RNN_HIDDEN_SIZE", config.DECODER_RNN_HIDDEN_SIZE))
-
-        s.append(("COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS", config.COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS))
-        if config.USE_PRETRAINED_WORD_EMBEDDINGS:
-            s.append(("USE_PRETRAINED_WORD_EMBEDDINGS", config.PRETRAINED_WORD_EMBEDDINGS_PATH))
-            s.append(("TRAIN_WORD_EMBEDDINGS", config.TRAIN_WORD_EMBEDDINGS))
+        if isbaseline:
+            predicted_ids = model.predict(encoder_triples_inputs=encoder_triples_inputs,
+                                          encoder_predicates_direction=direction)
         else:
-            s.append(("USE_PRETRAINED_WORD_EMBEDDINGS", "FALSE"))
 
-        s.append(("USE_PRETRAINED_KB_EMBEDDINGS", config.USE_PRETRAINED_KB_EMBEDDINGS))
-        s.append(("TRAIN_KB_EMBEDDINGS", config.TRAIN_KB_EMBEDDINGS))
+            encoder_text_inputs = []
+            encoder_text_inputs_length = []
+            if args.subtype:
+                encoder_text_inputs.append(encoder_subtypes_inputs)
+                encoder_text_inputs_length.append(encoder_subtypes_inputs_length)
+            if args.objtype:
+                encoder_text_inputs.append(encoder_objtypes_inputs)
+                encoder_text_inputs_length.append(encoder_objtypes_inputs_length)
+            if args.pred:
+                encoder_text_inputs.append(encoder_dep_inputs)
+                encoder_text_inputs_length.append(encoder_dep_length)
 
-        s.append(("Batch Size", config.BATCH_SIZE))
-        s.append(("Epochs", config.MAX_EPOCHS))
-        s.append(("LR", config.LR))
-        s.append(("MAX_GRAD_NORM", config.MAX_GRAD_NORM))
+            predicted_ids = model.predict(encoder_triples_inputs=encoder_triples_inputs,
+                                          encoder_text_inputs=encoder_text_inputs,
+                                          encoder_text_inputs_length=encoder_text_inputs_length,
+                                          encoder_predicates_direction=direction)
 
-        for i in e.overall_eval.items():
-            s.append(i)
+        for c, i in enumerate(encoder_triples_inputs):
 
-        with open(args.logfile, 'a+') as f:
-            f.write("\n------------\n")
-            for k in s:
-                print("%s \t %s" % (k[0], k[1]))
-                f.write("%s \t %s\n" % (k[0], k[1]))
+            sub = data.inv_entityvocab[i[0]]
+            pred = data.inv_propertyvocab[i[1]]
+            obj = data.inv_entityvocab[i[2]]
+
+            y = " ".join([data.inv_wordvocab[i] for i in np.squeeze(predicted_ids[c], axis=1)])
+            y_label = " ".join([data.inv_wordvocab[i] for i in decoder_inputs[c]])
+
+            y_post_proc = post_process(y, meta["placeholder_dict"][c])
+            y_label_post_proc = post_process(y_label, meta["placeholder_dict"][c])
+
+            subtype = " ".join([data.inv_wordvocab[i] for i in encoder_subtypes_inputs[c]])
+            objtype = " ".join([data.inv_wordvocab[i] for i in encoder_objtypes_inputs[c]])
+            dep = " ".join([data.inv_wordvocab[i] for i in encoder_dep_inputs[c]])
+
+            results.append([sub, pred, obj, subtype, objtype, dep, y, y_label, y_post_proc, y_label_post_proc])
+
+            predicted.append(y)
+            labels.append(y_label)
+
+    results_df = pd.DataFrame(results, columns=["sub", "pred", "obj", "subtype", "objtype", "dep", "y", "y_label", "y_post_proc", "y_label_post_proc"])
+    results_df.to_csv(args.out, encoding="utf-8")
+
+    # remove start
+    predicted = [" ".join(i.split()[:-1]).encode('ascii', 'ignore') for i in predicted]
+    labels = [" ".join(i.split()[1:-1]).encode('ascii', 'ignore') for i in labels]
+    e = Evaluator(predicted, labels)
+    e.evaluate()
+
+    s = list()
+    s.append(("model_Name", model_name))
+    s.append(("DECODER_RNN_HIDDEN_SIZE", config.DECODER_RNN_HIDDEN_SIZE))
+
+    s.append(("COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS", config.COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS))
+    if config.USE_PRETRAINED_WORD_EMBEDDINGS:
+        s.append(("USE_PRETRAINED_WORD_EMBEDDINGS", config.PRETRAINED_WORD_EMBEDDINGS_PATH))
+        s.append(("TRAIN_WORD_EMBEDDINGS", config.TRAIN_WORD_EMBEDDINGS))
+    else:
+        s.append(("USE_PRETRAINED_WORD_EMBEDDINGS", "FALSE"))
+
+    s.append(("USE_PRETRAINED_KB_EMBEDDINGS", config.USE_PRETRAINED_KB_EMBEDDINGS))
+    s.append(("TRAIN_KB_EMBEDDINGS", config.TRAIN_KB_EMBEDDINGS))
+
+    s.append(("Batch Size", config.BATCH_SIZE))
+    s.append(("Epochs", config.MAX_EPOCHS))
+    s.append(("LR", config.LR))
+    s.append(("MAX_GRAD_NORM", config.MAX_GRAD_NORM))
+
+    for i in e.overall_eval.items():
+        s.append(i)
+
+    with open(args.logfile, 'a+') as f:
+        f.write("\n------------\n")
+        for k in s:
+            print("%s \t %s" % (k[0], k[1]))
+            f.write("%s \t %s\n" % (k[0], k[1]))
