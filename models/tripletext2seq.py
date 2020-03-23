@@ -516,7 +516,7 @@ class TripleText2SeqModel():
 
     def __helper__initializer(self):
         sqrt3 = math.sqrt(3)  # Uniform(-sqrt(3), sqrt(3)) has variance=1.
-        initializer = tf.random_uniform_initializer(-sqrt3, sqrt3, dtype=tf.float32)
+        initializer = tf.random_uniform_initializer(-sqrt3, sqrt3)
         return initializer
 
     def compute_loss(self, encoder_triples_inputs, encoder_text_inputs, encoder_text_inputs_length, decoder_inputs, decoder_inputs_lengths, encoder_predicates_direction):
