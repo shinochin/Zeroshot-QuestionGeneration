@@ -117,47 +117,46 @@ class TripleText2SeqModel():
         print('building Triples encoder ...')
         start = time.time()
 
-        with tf.variable_scope('encoder'):
-            # Create Embeddings Weights
+        # Create Embeddings Weights
 
-            if self.config.USE_PRETRAINED_KB_EMBEDDINGS:
+        if self.config.USE_PRETRAINED_KB_EMBEDDINGS:
 
-                ent_kb_emb = pickle.load(open(self.config.PRETRAINED_ENTITIES_EMBEDDINGS_PATH))
-                self.encoder_entities_embeddings = tf.Variable(ent_kb_emb, name="entities_embeddings", trainable=self.config.TRAIN_KB_EMBEDDINGS)
+            ent_kb_emb = pickle.load(open(self.config.PRETRAINED_ENTITIES_EMBEDDINGS_PATH))
+            self.encoder_entities_embeddings = tf.Variable(ent_kb_emb, name="entities_embeddings", trainable=self.config.TRAIN_KB_EMBEDDINGS)
 
-                pred_kb_emb = pickle.load(open(self.config.PRETRAINED_PREDICATES_EMBEDDINGS_PATH))
-                self.encoder_predicates_embeddings = tf.Variable(pred_kb_emb, name="predicates_embeddings",
-                                                               trainable=self.config.TRAIN_KB_EMBEDDINGS)
+            pred_kb_emb = pickle.load(open(self.config.PRETRAINED_PREDICATES_EMBEDDINGS_PATH))
+            self.encoder_predicates_embeddings = tf.Variable(pred_kb_emb, name="predicates_embeddings",
+                                                           trainable=self.config.TRAIN_KB_EMBEDDINGS)
 
-            else:
-                self.encoder_entities_embeddings = tf.get_variable("entities_embeddings",
-                                                      shape=[self.config.ENTITIES_VOCAB, self.config.ENTITIES_EMBEDDING_SIZE],
-                                                      initializer=self.__helper__initializer(),
-                                                      dtype=tf.float32
-                                                      )
-                self.encoder_predicates_embeddings = tf.get_variable("predicates_embeddings",
-                                                              shape=[self.config.PREDICATES_VOCAB,
-                                                                     self.config.PREDICATES_EMBEDDING_SIZE],
-                                                              initializer=self.__helper__initializer(),
-                                                              dtype=tf.float32
-                                                      )
+        else:
+            self.encoder_entities_embeddings = tf.get_variable("entities_embeddings",
+                                                  shape=[self.config.ENTITIES_VOCAB, self.config.ENTITIES_EMBEDDING_SIZE],
+                                                  initializer=self.__helper__initializer(),
+                                                  dtype=tf.float32
+                                                  )
+            self.encoder_predicates_embeddings = tf.get_variable("predicates_embeddings",
+                                                          shape=[self.config.PREDICATES_VOCAB,
+                                                                 self.config.PREDICATES_EMBEDDING_SIZE],
+                                                          initializer=self.__helper__initializer(),
+                                                          dtype=tf.float32
+                                                  )
 
-            # embedding the encoder inputs
-            # encoder_inputs is of size [Batch size x 3]
-            # encoder_inputs_embedded is of size [Batch size x 3 x TRIPLES_EMBEDDING_SIZE]
-            self.encoder_entities_inputs_embedded = tf.nn.embedding_lookup(self.encoder_entities_embeddings, self.encoder_entities_inputs)
+        # embedding the encoder inputs
+        # encoder_inputs is of size [Batch size x 3]
+        # encoder_inputs_embedded is of size [Batch size x 3 x TRIPLES_EMBEDDING_SIZE]
+        self.encoder_entities_inputs_embedded = tf.nn.embedding_lookup(self.encoder_entities_embeddings, self.encoder_entities_inputs)
 
-            self.encoder_predicates_inputs_embedded = tf.nn.embedding_lookup(self.encoder_predicates_embeddings, self.encoder_predicates_inputs)
+        self.encoder_predicates_inputs_embedded = tf.nn.embedding_lookup(self.encoder_predicates_embeddings, self.encoder_predicates_inputs)
 
-            direction = tf.expand_dims(self.encoder_predicates_direction, axis=1)
-            direction = tf.expand_dims(direction, axis=2)
+        direction = tf.expand_dims(self.encoder_predicates_direction, axis=1)
+        direction = tf.expand_dims(direction, axis=2)
 
-            self.encoder_predicates_inputs_embedded = tf.multiply(self.encoder_predicates_inputs_embedded, direction)
+        self.encoder_predicates_inputs_embedded = tf.multiply(self.encoder_predicates_inputs_embedded, direction)
 
-            self.encoder_triples_inputs_embedded = tf.concat((self.encoder_entities_inputs_embedded, self.encoder_predicates_inputs_embedded), axis=1)
-            # Encode input triple into a vector
-            # encoder_state: [batch_size, cell_output_size]
-            self.encoder_triples_last_state = tf.concat(tf.unstack(self.encoder_triples_inputs_embedded, axis=1), axis=1)
+        self.encoder_triples_inputs_embedded = tf.concat((self.encoder_entities_inputs_embedded, self.encoder_predicates_inputs_embedded), axis=1)
+        # Encode input triple into a vector
+        # encoder_state: [batch_size, cell_output_size]
+        self.encoder_triples_last_state = tf.concat(tf.unstack(self.encoder_triples_inputs_embedded, axis=1), axis=1)
 
         print('Building encoder in: ', time.time() - start, ' secs')
 
@@ -166,90 +165,88 @@ class TripleText2SeqModel():
         print('Building Input Sequence Encoder ...')
         start = time.time()
 
-        with tf.variable_scope('encoder'):
+        ###################
+        # Word Embeddings #
+        ###################
+        # Create Word Embeddings Weights
+        if self.config.USE_PRETRAINED_WORD_EMBEDDINGS:
 
-            ###################
-            # Word Embeddings #
-            ###################
-            # Create Word Embeddings Weights
-            if self.config.USE_PRETRAINED_WORD_EMBEDDINGS:
+            word_emb = pickle.load(open(self.config.PRETRAINED_WORD_EMBEDDINGS_PATH, "rb")).astype(np.float32)
+            self.encoder_word_embeddings = tf.Variable(word_emb, name="encoder_word_embeddings",
+                                                       trainable=self.config.TRAIN_WORD_EMBEDDINGS)
 
-                word_emb = pickle.load(open(self.config.PRETRAINED_WORD_EMBEDDINGS_PATH, "rb")).astype(np.float32)
-                self.encoder_word_embeddings = tf.Variable(word_emb, name="encoder_word_embeddings",
-                                                           trainable=self.config.TRAIN_WORD_EMBEDDINGS)
+        else:
+            self.encoder_word_embeddings = tf.get_variable("encoder_word_embeddings",
+                                                           shape=[self.config.DECODER_VOCAB_SIZE,
+                                                                  self.config.INPUT_SEQ_EMBEDDING_SIZE],
+                                                           initializer=self.__helper__initializer(),
+                                                           dtype=tf.float32
+                                                           )
 
-            else:
-                self.encoder_word_embeddings = tf.get_variable("encoder_word_embeddings",
-                                                               shape=[self.config.DECODER_VOCAB_SIZE,
-                                                                      self.config.INPUT_SEQ_EMBEDDING_SIZE],
-                                                               initializer=self.__helper__initializer(),
-                                                               dtype=tf.float32
-                                                               )
+        # Embedding the encoder inputs
+        # Encoder Input size = NUMBER_OF_TEXTUAL_EVIDENCES x BATCH x input_length
+        # Embedded Input size =  NUMBER_OF_TEXTUAL_EVIDENCES x BATCH x input_length x word_embeddings_size
+        self.encoder_text_inputs_embedded = tf.nn.embedding_lookup(self.encoder_word_embeddings,
+                                                                   self.encoder_text_inputs)
 
-            # Embedding the encoder inputs
-            # Encoder Input size = NUMBER_OF_TEXTUAL_EVIDENCES x BATCH x input_length
-            # Embedded Input size =  NUMBER_OF_TEXTUAL_EVIDENCES x BATCH x input_length x word_embeddings_size
-            self.encoder_text_inputs_embedded = tf.nn.embedding_lookup(self.encoder_word_embeddings,
-                                                                       self.encoder_text_inputs)
+        #######
+        # RNN #
+        #######
 
-            #######
-            # RNN #
-            #######
+        # building a multilayer RNN for each Textual Evidence
+        # Encode input sequences into context vectors:
+        # encoder_outputs: [Num_text_evidence, batch_size, max_time_step, cell_output_size]
+        # encoder_state: [Num_text_evidence, batch_size, cell_output_size]
 
-            # building a multilayer RNN for each Textual Evidence
-            # Encode input sequences into context vectors:
-            # encoder_outputs: [Num_text_evidence, batch_size, max_time_step, cell_output_size]
-            # encoder_state: [Num_text_evidence, batch_size, cell_output_size]
+        self.encoder_text_outputs = []
+        self.encoder_text_last_state = []
 
-            self.encoder_text_outputs = []
-            self.encoder_text_last_state = []
+        # If not bidirectional encoder
+        self.encoder_cell = []
 
-            # If not bidirectional encoder
-            self.encoder_cell = []
+        rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
 
-            rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
-
-            if "bi" not in self.config.ENCODER_RNN_CELL_TYPE:
-                    for _ in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
-                        #rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
-                        self.encoder_cell.append(tf.nn.rnn_cell.MultiRNNCell([rnn] * self.config.NUM_LAYERS))
-
-                    for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
-
-                        out, state = tf.nn.dynamic_rnn(
-                            cell=self.encoder_cell[i],
-                            inputs=self.encoder_text_inputs_embedded[i],
-                            sequence_length=self.encoder_text_inputs_length[i],
-                            dtype=tf.float32
-                        )
-
-                        self.encoder_text_outputs.append(out)
-                        self.encoder_text_last_state.append(tf.squeeze(state, axis=0))
-
-            # If bidirectional encoder
-            else:
-                self.fwd_encoder_cell = []
-                self.bw_encoder_cell = []
+        if "bi" not in self.config.ENCODER_RNN_CELL_TYPE:
                 for _ in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
-                    # two rnn decoders for each layer for each input sequence\
-                    #fwrnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
-                    #bwrnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
-
-                    self.fwd_encoder_cell.append([rnn] * self.config.NUM_LAYERS)
-                    self.bw_encoder_cell.append([rnn] * self.config.NUM_LAYERS)
+                    #rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
+                    self.encoder_cell.append(tf.nn.rnn_cell.MultiRNNCell([rnn] * self.config.NUM_LAYERS))
 
                 for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
 
-                    out, fwd_state, bk_state = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
-                        cells_fw=self.fwd_encoder_cell[i],
-                        cells_bw=self.bw_encoder_cell[i],
+                    out, state = tf.nn.dynamic_rnn(
+                        cell=self.encoder_cell[i],
                         inputs=self.encoder_text_inputs_embedded[i],
                         sequence_length=self.encoder_text_inputs_length[i],
                         dtype=tf.float32
                     )
 
-                    self.encoder_text_outputs.append(tf.concat(out, 2))
-                    self.encoder_text_last_state.append(tf.squeeze(tf.concat([fwd_state, bk_state], 2), axis=0))
+                    self.encoder_text_outputs.append(out)
+                    self.encoder_text_last_state.append(tf.squeeze(state, axis=0))
+
+        # If bidirectional encoder
+        else:
+            self.fwd_encoder_cell = []
+            self.bw_encoder_cell = []
+            for _ in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
+                # two rnn decoders for each layer for each input sequence\
+                #fwrnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
+                #bwrnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
+
+                self.fwd_encoder_cell.append([rnn] * self.config.NUM_LAYERS)
+                self.bw_encoder_cell.append([rnn] * self.config.NUM_LAYERS)
+
+            for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
+
+                out, fwd_state, bk_state = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
+                    cells_fw=self.fwd_encoder_cell[i],
+                    cells_bw=self.bw_encoder_cell[i],
+                    inputs=self.encoder_text_inputs_embedded[i],
+                    sequence_length=self.encoder_text_inputs_length[i],
+                    dtype=tf.float32
+                )
+
+                self.encoder_text_outputs.append(tf.concat(out, 2))
+                self.encoder_text_last_state.append(tf.squeeze(tf.concat([fwd_state, bk_state], 2), axis=0))
 
         print('Building encoder in: ', time.time() - start, ' secs')
 
@@ -381,104 +378,102 @@ class TripleText2SeqModel():
         print("building decoder and attention ..")
         start = time.time()
 
-        with tf.variable_scope('decoder'):
+        # input and output layers to the decoder
+        # decoder_input_layer = Dense(self.config.DECODER_RNN_HIDDEN_SIZE, dtype=tf.float32, name='decoder_input_projection')
+        decoder_output_layer = Dense(self.config.DECODER_VOCAB_SIZE, name="decoder_output_projection")
 
-            # input and output layers to the decoder
-            # decoder_input_layer = Dense(self.config.DECODER_RNN_HIDDEN_SIZE, dtype=tf.float32, name='decoder_input_projection')
-            decoder_output_layer = Dense(self.config.DECODER_VOCAB_SIZE, name="decoder_output_projection")
+        if self.config.COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS:
+            # connect encoder and decoder word embeddings
+            self.decoder_embeddings = self.encoder_word_embeddings
 
-            if self.config.COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS:
-                # connect encoder and decoder word embeddings
-                self.decoder_embeddings = self.encoder_word_embeddings
+        elif self.config.USE_PRETRAINED_WORD_EMBEDDINGS:
 
-            elif self.config.USE_PRETRAINED_WORD_EMBEDDINGS:
+            word_emb = pickle.load(open(self.config.PRETRAINED_WORD_EMBEDDINGS_PATH)).astype(np.float32)
 
-                word_emb = pickle.load(open(self.config.PRETRAINED_WORD_EMBEDDINGS_PATH)).astype(np.float32)
+            self.decoder_embeddings = tf.Variable(word_emb, name="decoder_embeddings",
+                                                           trainable=self.config.TRAIN_WORD_EMBEDDINGS)
 
-                self.decoder_embeddings = tf.Variable(word_emb, name="decoder_embeddings",
-                                                               trainable=self.config.TRAIN_WORD_EMBEDDINGS)
+        else:
+            self.decoder_embeddings = tf.get_variable("decoder_embeddings",
+                                                  shape=[self.config.DECODER_VOCAB_SIZE, self.config.DECODER_EMBEDDING_SIZE],
+                                                  initializer=self.__helper__initializer(),
+                                                  dtype=tf.float32
+                                                  )
 
-            else:
-                self.decoder_embeddings = tf.get_variable("decoder_embeddings",
-                                                      shape=[self.config.DECODER_VOCAB_SIZE, self.config.DECODER_EMBEDDING_SIZE],
-                                                      initializer=self.__helper__initializer(),
-                                                      dtype=tf.float32
-                                                      )
+        if self.config.USE_ATTENTION:
+            self.__create_decoder_attention_cell()
+        else:
+            self.__create_decoder_cell()
 
-            if self.config.USE_ATTENTION:
-                self.__create_decoder_attention_cell()
-            else:
-                self.__create_decoder_cell()
+        ######################################
+        # Build the decoder in training mode #
+        ######################################
+        if self.mode == 'training':
 
-            ######################################
-            # Build the decoder in training mode #
-            ######################################
-            if self.mode == 'training':
+            # changing inputs to embeddings and then through the input projection
+            # decoder_inputs_embedded: [batch_size, max_time_step + 1, embedding_size]
+            self.decoder_inputs_embedded = tf.nn.embedding_lookup(params=self.decoder_embeddings,
+                                                                  ids=self.decoder_inputs_train)
+            # self.decoder_inputs_embedded = decoder_input_layer(self.decoder_inputs_embedded)
 
-                # changing inputs to embeddings and then through the input projection
-                # decoder_inputs_embedded: [batch_size, max_time_step + 1, embedding_size]
-                self.decoder_inputs_embedded = tf.nn.embedding_lookup(params=self.decoder_embeddings,
-                                                                      ids=self.decoder_inputs_train)
-                # self.decoder_inputs_embedded = decoder_input_layer(self.decoder_inputs_embedded)
+            # Helper to feed inputs to the training:
 
-                # Helper to feed inputs to the training:
+            self.training_helper = tf.contrib.seq2seq.TrainingHelper(
+                inputs=self.decoder_inputs_embedded,
+                sequence_length=self.decoder_inputs_length_train,
+                name='training_helper')
 
-                self.training_helper = tf.contrib.seq2seq.TrainingHelper(
-                    inputs=self.decoder_inputs_embedded,
-                    sequence_length=self.decoder_inputs_length_train,
-                    name='training_helper')
+            # Build the decoder
+            self.training_decoder = tf.contrib.seq2seq.BasicDecoder(
+                cell=self.decoder_cell,
+                helper=self.training_helper,
+                initial_state=self.decoder_initial_state,
+                output_layer=decoder_output_layer)
 
-                # Build the decoder
-                self.training_decoder = tf.contrib.seq2seq.BasicDecoder(
-                    cell=self.decoder_cell,
-                    helper=self.training_helper,
-                    initial_state=self.decoder_initial_state,
-                    output_layer=decoder_output_layer)
+            # decoder outputs are of type tf.contrib.seq2seq.BasicDecoderOutput
+            # has two fields `rnn_output` and `sample_id`
 
-                # decoder outputs are of type tf.contrib.seq2seq.BasicDecoderOutput
-                # has two fields `rnn_output` and `sample_id`
+            self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = tf.contrib.seq2seq.dynamic_decode(
+                decoder=self.training_decoder,
+                impute_finished=True,
+                maximum_iterations=self.decoder_max_length
+            )
 
-                self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = tf.contrib.seq2seq.dynamic_decode(
-                    decoder=self.training_decoder,
-                    impute_finished=True,
-                    maximum_iterations=self.decoder_max_length
-                )
+            # In the training mode only create LOSS and Optimizer
 
-                # In the training mode only create LOSS and Optimizer
+            self.__create_loss()
+            self.__create_optimizer()
 
-                self.__create_loss()
-                self.__create_optimizer()
+        ######################################
+        # Build the decoder in sampling mode #
+        ######################################
+        elif self.mode == 'inference':
 
-            ######################################
-            # Build the decoder in sampling mode #
-            ######################################
-            elif self.mode == 'inference':
+            start_tokens = tf.ones([self.batch_size, ], dtype=tf.int32) * self.config.DECODER_START_TOKEN_ID
+            end_token = self.config.DECODER_END_TOKEN_ID
 
-                start_tokens = tf.ones([self.batch_size, ], dtype=tf.int32) * self.config.DECODER_START_TOKEN_ID
-                end_token = self.config.DECODER_END_TOKEN_ID
+            def decoder_inputs_embedder(inputs):
+                # return decoder_input_layer(tf.nn.embedding_lookup(self.decoder_embeddings, inputs))
+                return tf.nn.embedding_lookup(self.decoder_embeddings, inputs)
 
-                def decoder_inputs_embedder(inputs):
-                    # return decoder_input_layer(tf.nn.embedding_lookup(self.decoder_embeddings, inputs))
-                    return tf.nn.embedding_lookup(self.decoder_embeddings, inputs)
+            # end token is needed so the helper stop feeding new inputs again once the <end> mark is shown.
+            decoder_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(decoder_inputs_embedder, start_tokens, end_token)
 
-                # end token is needed so the helper stop feeding new inputs again once the <end> mark is shown.
-                decoder_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(decoder_inputs_embedder, start_tokens, end_token)
+            # Basic decoder performs greedy decoding at each time step
+            print("Building Greedy Decoder ...")
 
-                # Basic decoder performs greedy decoding at each time step
-                print("Building Greedy Decoder ...")
+            inference_decoder = tf.contrib.seq2seq.BasicDecoder(cell=self.decoder_cell,
+                                                                helper=decoder_helper,
+                                                                initial_state=self.decoder_initial_state,
+                                                                output_layer=decoder_output_layer)
 
-                inference_decoder = tf.contrib.seq2seq.BasicDecoder(cell=self.decoder_cell,
-                                                                    helper=decoder_helper,
-                                                                    initial_state=self.decoder_initial_state,
-                                                                    output_layer=decoder_output_layer)
+            self.decoder_outputs_inference, self.decoder_last_state_inference, self.decoder_outputs_length_inference = tf.contrib.seq2seq.dynamic_decode(
+                decoder=inference_decoder,
+                output_time_major=False,
+                maximum_iterations=self.decoder_max_length
+            )
 
-                self.decoder_outputs_inference, self.decoder_last_state_inference, self.decoder_outputs_length_inference = tf.contrib.seq2seq.dynamic_decode(
-                    decoder=inference_decoder,
-                    output_time_major=False,
-                    maximum_iterations=self.decoder_max_length
-                )
-
-                self.decoder_pred_inference = tf.expand_dims(self.decoder_outputs_inference.sample_id, -1)
+            self.decoder_pred_inference = tf.expand_dims(self.decoder_outputs_inference.sample_id, -1)
 
         print('Building decoder in: ', time.time() - start, ' secs')
 
