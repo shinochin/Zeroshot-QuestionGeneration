@@ -323,7 +323,7 @@ class TripleText2SeqModel():
 
         context_memory = tf.concat(self.encoder_text_outputs, axis=1)
 
-        self.context_attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
+        self.context_attention_mechanism = tfa.BahdanauAttention(
             num_units=self.config.INPUT_SEQ_RNN_HIDDEN_SIZE if "bi" not in self.config.ENCODER_RNN_CELL_TYPE
             else self.config.INPUT_SEQ_RNN_HIDDEN_SIZE * 2,    # the depth of the Attention layer
             memory=context_memory,
@@ -336,7 +336,7 @@ class TripleText2SeqModel():
 
         decoder_hidden_state_reshape = Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
 
-        self.decoder_cell_list[-1] = tf.contrib.seq2seq.AttentionWrapper(
+        self.decoder_cell_list[-1] = tfa.seq2seq.AttentionWrapper(
             cell=self.decoder_cell_list[-1],
             # the output hidden size of the last decoder
             attention_layer_size=[self.config.TRIPLES_EMBEDDING_SIZE,
@@ -348,7 +348,7 @@ class TripleText2SeqModel():
             name="Attention_Wrapper"
         )
 
-        self.decoder_cell = tf.keras.layers.StackedRNNCells(self.decoder_cell_list)
+        self.decoder_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell(self.decoder_cell_list)
 
         # To be compatible with AttentionWrapper, the encoder last state
         # of the top layer should be converted into the AttentionWrapperState form
