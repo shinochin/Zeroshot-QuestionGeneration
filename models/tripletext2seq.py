@@ -43,6 +43,7 @@ class TripleText2SeqModel():
 
         self.__create_encoder()
         self.__create_decoder()
+        self.init = self.__helper__initializer()
 
     def __create_placeholders(self):
         """
@@ -129,17 +130,14 @@ class TripleText2SeqModel():
                                                            trainable=self.config.TRAIN_KB_EMBEDDINGS)
 
         else:
-            self.encoder_entities_embeddings = tf.get_variable("entities_embeddings",
-                                                  shape=[self.config.ENTITIES_VOCAB, self.config.ENTITIES_EMBEDDING_SIZE],
-                                                  initializer=self.__helper__initializer(),
-                                                  dtype=tf.float32
-                                                  )
-            self.encoder_predicates_embeddings = tf.get_variable("predicates_embeddings",
-                                                          shape=[self.config.PREDICATES_VOCAB,
-                                                                 self.config.PREDICATES_EMBEDDING_SIZE],
-                                                          initializer=self.__helper__initializer(),
-                                                          dtype=tf.float32
-                                                  )
+            self.encoder_entities_embeddings = tf.Variable(
+                self.init([self.config.ENTITIES_VOCAB, self.config.ENTITIES_EMBEDDING_SIZE]),
+                name="entities_embeddings",
+                dtype=tf.float32)
+            self.encoder_predicates_embeddings = tf.get_variable(
+                self.init([self.config.PREDICATES_VOCAB, self.config.PREDICATES_EMBEDDING_SIZE]),
+                name="predicates_embeddings",
+                dtype=tf.float32)
 
         # embedding the encoder inputs
         # encoder_inputs is of size [Batch size x 3]
@@ -176,12 +174,10 @@ class TripleText2SeqModel():
                                                        trainable=self.config.TRAIN_WORD_EMBEDDINGS)
 
         else:
-            self.encoder_word_embeddings = tf.get_variable("encoder_word_embeddings",
-                                                           shape=[self.config.DECODER_VOCAB_SIZE,
-                                                                  self.config.INPUT_SEQ_EMBEDDING_SIZE],
-                                                           initializer=self.__helper__initializer(),
-                                                           dtype=tf.float32
-                                                           )
+            self.encoder_word_embeddings = tf.Variable(
+                self.init([self.config.DECODER_VOCAB_SIZE, self.config.INPUT_SEQ_EMBEDDING_SIZE]),
+                name="encoder_word_embeddings",
+                dtype=tf.float32)
 
         # Embedding the encoder inputs
         # Encoder Input size = NUMBER_OF_TEXTUAL_EVIDENCES x BATCH x input_length
@@ -394,11 +390,10 @@ class TripleText2SeqModel():
                                                            trainable=self.config.TRAIN_WORD_EMBEDDINGS)
 
         else:
-            self.decoder_embeddings = tf.get_variable("decoder_embeddings",
-                                                  shape=[self.config.DECODER_VOCAB_SIZE, self.config.DECODER_EMBEDDING_SIZE],
-                                                  initializer=self.__helper__initializer(),
-                                                  dtype=tf.float32
-                                                  )
+            self.decoder_embeddings = tf.Variable(
+                self.init([self.config.DECODER_VOCAB_SIZE, self.config.DECODER_EMBEDDING_SIZE]),
+                name="decoder_embeddings",
+                dtype=tf.float32)
 
         if self.config.USE_ATTENTION:
             self.__create_decoder_attention_cell()
