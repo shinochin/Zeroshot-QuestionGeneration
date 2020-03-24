@@ -426,14 +426,16 @@ class TripleText2SeqModel():
 
             # decoder outputs are of type tf.contrib.seq2seq.BasicDecoderOutput
             # has two fields `rnn_output` and `sample_id`
-
+            """
             self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = tfa.seq2seq.dynamic_decode(
                 decoder=self.training_decoder,
                 impute_finished=True,
                 maximum_iterations=self.decoder_max_length,
                 decoder_init_input=self.decoder_inputs_embedded,
-                decoder_init_kwargs={"initial_state": self.decoder_initial_state}
-            )
+                decoder_init_kwargs={"initial_state": self.decoder_initial_state})
+            """
+            self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = self.training_decoder(
+                self.decoder_inputs_embedded, initial_state=self.decoder_initial_state)
 
             # In the training mode only create LOSS and Optimizer
 
