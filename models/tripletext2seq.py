@@ -299,7 +299,7 @@ class TripleText2SeqModel():
                                   self.config.INPUT_SEQ_RNN_HIDDEN_SIZE if "bi" not in self.config.ENCODER_RNN_CELL_TYPE
                                   else self.config.INPUT_SEQ_RNN_HIDDEN_SIZE * 2],
             attention_mechanism=[self.triple_attention_mechanism, self.context_attention_mechanism],
-            initial_cell_state=decoder_hidden_state_reshape(self.encoder_last_state),
+            initial_cell_state=(decoder_hidden_state_reshape(self.encoder_last_state),),
             alignment_history=False,
             name="Attention_Wrapper"
         )
