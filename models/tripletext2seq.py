@@ -207,7 +207,7 @@ class TripleText2SeqModel():
 
                 for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
 
-                    out, state = tf.compat.v1.nn.dynamic_rnn(
+                    out, state = tf.keras.layers.RNN(
                         cell=self.encoder_cell[i],
                         inputs=self.encoder_text_inputs_embedded[i],
                         sequence_length=self.encoder_text_inputs_length[i],
