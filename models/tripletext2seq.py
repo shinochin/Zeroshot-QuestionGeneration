@@ -229,14 +229,13 @@ class TripleText2SeqModel():
                 self.bw_encoder_cell.append([rnn] * self.config.NUM_LAYERS)
 
             for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
-
-                out, fwd_state, bk_state = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
-                    cells_fw=self.fwd_encoder_cell[i],
-                    cells_bw=self.bw_encoder_cell[i],
-                    inputs=self.encoder_text_inputs_embedded[i],
-                    sequence_length=self.encoder_text_inputs_length[i],
-                    dtype=tf.float32
-                )
+                out = self.encoder_text_inputs_embedded[i]
+                for j in range(self.config.NUM_LAYERS):
+                    out, fwd_state, bk_state = tf.keras.layers.Bidirectional(
+                        tf.keras.layers.RNN(
+                        cells_fw=self.fwd_encoder_cell[i][j],
+                        cells_bw=self.bw_encoder_cell[i][j],
+                        return_state=True, return_sequences=True))(out, [fwd_state, bk_state])
 
                 self.encoder_text_outputs.append(tf.concat(out, 2))
                 self.encoder_text_last_state.append(tf.squeeze(tf.concat([fwd_state, bk_state], 2), axis=0))
@@ -408,22 +407,22 @@ class TripleText2SeqModel():
 
             # Helper to feed inputs to the training:
 
-            self.training_helper = tf.contrib.seq2seq.TrainingHelper(
+            self.training_helper = tfa.seq2seq.TrainingSampler(
                 inputs=self.decoder_inputs_embedded,
                 sequence_length=self.decoder_inputs_length_train,
                 name='training_helper')
 
             # Build the decoder
-            self.training_decoder = tf.contrib.seq2seq.BasicDecoder(
-                cell=self.decoder_cell,
-                helper=self.training_helper,
+            self.training_decoder = tfa.seq2seq.BasicDecoder(
+                self.decoder_cell,
+                self.training_sampler,
                 initial_state=self.decoder_initial_state,
                 output_layer=decoder_output_layer)
 
             # decoder outputs are of type tf.contrib.seq2seq.BasicDecoderOutput
             # has two fields `rnn_output` and `sample_id`
 
-            self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = tf.contrib.seq2seq.dynamic_decode(
+            self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = tfa.seq2seq.dynamic_decode(
                 decoder=self.training_decoder,
                 impute_finished=True,
                 maximum_iterations=self.decoder_max_length
@@ -447,17 +446,17 @@ class TripleText2SeqModel():
                 return tf.nn.embedding_lookup(self.decoder_embeddings, inputs)
 
             # end token is needed so the helper stop feeding new inputs again once the <end> mark is shown.
-            decoder_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(decoder_inputs_embedder, start_tokens, end_token)
+            decoder_helper = tfa.seq2seq.GreedyEmbeddingSampler(decoder_inputs_embedder, start_tokens, end_token)
 
             # Basic decoder performs greedy decoding at each time step
             print("Building Greedy Decoder ...")
 
-            inference_decoder = tf.contrib.seq2seq.BasicDecoder(cell=self.decoder_cell,
-                                                                helper=decoder_helper,
-                                                                initial_state=self.decoder_initial_state,
-                                                                output_layer=decoder_output_layer)
+            inference_decoder = tfa.seq2seq.BasicDecoder(cell=self.decoder_cell,
+                                                         helper=decoder_helper,
+                                                         initial_state=self.decoder_initial_state,
+                                                         output_layer=decoder_output_layer)
 
-            self.decoder_outputs_inference, self.decoder_last_state_inference, self.decoder_outputs_length_inference = tf.contrib.seq2seq.dynamic_decode(
+            self.decoder_outputs_inference, self.decoder_last_state_inference, self.decoder_outputs_length_inference = tfa.seq2seq.dynamic_decode(
                 decoder=inference_decoder,
                 output_time_major=False,
                 maximum_iterations=self.decoder_max_length
@@ -480,7 +479,7 @@ class TripleText2SeqModel():
                                 name="masks")
 
         # Control loss dimensions with `average_across_timesteps` and `average_across_batch`
-        self.loss = tf.contrib.seq2seq.sequence_loss(logits=self.decoder_logits,
+        self.loss = tfa.seq2seq.sequence_loss(logits=self.decoder_logits,
                                                      targets=self.decoder_targets_train,
                                                      average_across_timesteps=False,
                                                      average_across_batch=False,
