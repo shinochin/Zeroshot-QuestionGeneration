@@ -430,7 +430,9 @@ class TripleText2SeqModel():
             self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_decode_train = tfa.seq2seq.dynamic_decode(
                 decoder=self.training_decoder,
                 impute_finished=True,
-                maximum_iterations=self.decoder_max_length
+                maximum_iterations=self.decoder_max_length,
+                decoder_init_input=self.decoder_inputs_embedded,
+                initial_state=self.decoder_initial_state
             )
 
             # In the training mode only create LOSS and Optimizer
