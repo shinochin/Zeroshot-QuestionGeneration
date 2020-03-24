@@ -416,7 +416,7 @@ class TripleText2SeqModel():
                 sequence_length=self.decoder_inputs_length_train)
 
             # Build the decoder
-            self.training_decoder = tfa.seq2seq.BasicDecoder(
+            self.training_decoder = tfa.seq2seq.Decoder(
                 self.decoder_cell,
                 self.training_sampler,
                 output_layer=decoder_output_layer)
