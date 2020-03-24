@@ -211,14 +211,13 @@ class TripleText2SeqModel():
                     encoder = tf.keras.layers.RNN(
                         cell=self.encoder_cell[i],
                         return_sequences=True,
-                        return_state=True,
+                        return_state=True)
                         # sequence_length=self.encoder_text_inputs_length[i],
-                        )
                     self.encoder.append(encoder)
                     out, state = encoder(self.encoder_text_inputs_embedded[i])
 
                     self.encoder_text_outputs.append(out)
-                    self.encoder_text_last_state.append(tf.squeeze(state, axis=0))
+                    self.encoder_text_last_state.append(state)
 
         # If bidirectional encoder
         else:
