@@ -407,7 +407,7 @@ class TripleText2SeqModel():
 
             # Helper to feed inputs to the training:
 
-            self.training_sampler = tfa.seq2seq.TrainingSampler()
+            self.training_sampler = tfa.seq2seq.TrainingSampler(time_major=False)
             self.training_sampler.initialize(
                 inputs=self.decoder_inputs_embedded,
                 sequence_length=self.decoder_inputs_length_train)
