@@ -263,51 +263,6 @@ class TripleText2SeqModel():
 
         self.decoder_initial_state = (decoder_hidden_state_reshape(self.encoder_last_state), )
 
-    def __create_decoder_attention_cell_old(self):
-        """
-        create decoder RNN with attention
-        :return:
-        """
-
-        memory = tf.concat([self.encoder_triples_inputs_embedded] + self.encoder_text_outputs, axis=1)
-
-        self.attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
-            num_units=self.config.TRIPLES_EMBEDDING_SIZE,    # the depth of the Attention layer
-            memory=memory,
-            name="Attention"
-        )
-
-        # create decoder cell:
-        gru = self.__build_single_rnn_cell(self.config.DECODER_RNN_HIDDEN_SIZE)
-        self.decoder_cell_list = [gru] * self.config.NUM_LAYERS
-
-        decoder_hidden_state_reshape = tf.keras.layers.Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
-
-        self.decoder_cell_list[-1] = tf.contrib.seq2seq.AttentionWrapper(
-            cell=self.decoder_cell_list[-1],
-            attention_layer_size=self.config.DECODER_RNN_HIDDEN_SIZE,     # the output hidden size of the last decoder
-            attention_mechanism=self.attention_mechanism,
-            initial_cell_state=decoder_hidden_state_reshape(self.encoder_last_state),
-            alignment_history=False,
-            name="Attention_Wrapper"
-        )
-
-        self.decoder_cell = tf.keras.layers.StackedRNNCells(self.decoder_cell_list)
-
-        # To be compatible with AttentionWrapper, the encoder last state
-        # of the top layer should be converted into the AttentionWrapperState form
-        # We can easily do this by calling AttentionWrapper.zero_state
-
-        # self.decoder_initial_state = self.encoder_last_state
-
-        init_state = self.decoder_cell_list[-1].zero_state(
-            batch_size=self.batch_size,
-            dtype=tf.float32
-        )
-
-        # a tuple because decode initial state has to take a tuple
-        self.decoder_initial_state = (init_state,)
-
     def __create_decoder_attention_cell(self):
         """
         create decoder RNN with attention
@@ -419,9 +374,9 @@ class TripleText2SeqModel():
                 self.decoder_cell,
                 self.training_sampler,
                 output_layer=decoder_output_layer)
-            self.training_decoder.initialize(
-                self.decoder_inputs_embedded,
-                initial_state=self.decoder_initial_state)
+            # self.training_decoder.initialize(
+            #     self.decoder_inputs_embedded,
+            #     initial_state=self.decoder_initial_state)
 
             # decoder outputs are of type tf.contrib.seq2seq.BasicDecoderOutput
             # has two fields `rnn_output` and `sample_id`
