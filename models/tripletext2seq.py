@@ -291,6 +291,9 @@ class TripleText2SeqModel():
         self.decoder_cell_list = [gru] * self.config.NUM_LAYERS
 
         decoder_hidden_state_reshape = tf.keras.layers.Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
+        initial_cell_state = (decoder_hidden_state_reshape(self.encoder_last_state),)
+        # a tuple because decode initial state has to take a tuple
+        self.decoder_initial_state = initial_cell_state
 
         self.decoder_cell_list[-1] = tfa.seq2seq.AttentionWrapper(
             cell=self.decoder_cell_list[-1],
@@ -299,7 +302,7 @@ class TripleText2SeqModel():
                                   self.config.INPUT_SEQ_RNN_HIDDEN_SIZE if "bi" not in self.config.ENCODER_RNN_CELL_TYPE
                                   else self.config.INPUT_SEQ_RNN_HIDDEN_SIZE * 2],
             attention_mechanism=[self.triple_attention_mechanism, self.context_attention_mechanism],
-            initial_cell_state=(decoder_hidden_state_reshape(self.encoder_last_state),),
+            initial_cell_state=initial_cell_state,
             alignment_history=False,
             name="Attention_Wrapper"
         )
@@ -312,13 +315,9 @@ class TripleText2SeqModel():
 
         # self.decoder_initial_state = self.encoder_last_state
 
-        init_state = self.decoder_cell_list[-1].get_initial_state(
-            batch_size=self.batch_size,
-            dtype=tf.float32
-        )
-
-        # a tuple because decode initial state has to take a tuple
-        self.decoder_initial_state = (init_state,)
+        # init_state = self.decoder_cell_list[-1].get_initial_state(
+        #     batch_size=self.batch_size,
+        #     dtype=tf.float32)
 
     def __create_decoder(self):
 
