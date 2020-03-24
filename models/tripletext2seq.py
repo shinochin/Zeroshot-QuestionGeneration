@@ -350,7 +350,7 @@ class TripleText2SeqModel():
             name="Attention_Wrapper"
         )
 
-        self.decoder_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell(self.decoder_cell_list)
+        self.decoder_cell = tf.keras.layers.StackedRNNCells(self.decoder_cell_list)
 
         # To be compatible with AttentionWrapper, the encoder last state
         # of the top layer should be converted into the AttentionWrapperState form
