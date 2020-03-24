@@ -204,7 +204,7 @@ class TripleText2SeqModel():
         if "bi" not in self.config.ENCODER_RNN_CELL_TYPE:
                 for _ in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
                     #rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
-                    self.encoder_cell.append(tf.compat.v1.nn.rnn_cell.MultiRNNCell([rnn] * self.config.NUM_LAYERS))
+                    self.encoder_cell.append(tf.keras.layers.StackedRNNCells([rnn] * self.config.NUM_LAYERS))
 
                 for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
 
