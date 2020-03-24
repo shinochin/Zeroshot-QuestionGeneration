@@ -108,7 +108,7 @@ class TripleText2SeqModel():
 
     def __build_single_rnn_cell(self, hidden_size):
 
-        cell = tf.keras.layers.GRU(hidden_size)
+        cell = tf.keras.layers.GRUCell(hidden_size)
 
         return cell
 
