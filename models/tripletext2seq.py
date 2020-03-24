@@ -416,8 +416,10 @@ class TripleText2SeqModel():
             self.training_decoder = tfa.seq2seq.BasicDecoder(
                 self.decoder_cell,
                 self.training_sampler,
-                initial_state=self.decoder_initial_state,
                 output_layer=decoder_output_layer)
+            self.training_decoder.initialize(
+                self.decoder_inputs_embedded,
+                initial_state=self.decoder_initial_state)
 
             # decoder outputs are of type tf.contrib.seq2seq.BasicDecoderOutput
             # has two fields `rnn_output` and `sample_id`
