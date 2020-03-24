@@ -432,7 +432,7 @@ class TripleText2SeqModel():
                 impute_finished=True,
                 maximum_iterations=self.decoder_max_length,
                 decoder_init_input=self.decoder_inputs_embedded,
-                initial_state=self.decoder_initial_state
+                decoder_init_kwargs={"initial_state": self.decoder_initial_state}
             )
 
             # In the training mode only create LOSS and Optimizer
