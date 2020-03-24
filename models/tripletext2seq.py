@@ -73,7 +73,7 @@ class TripleText2SeqModel():
         # each batch has a fixed input sequence length
         # self.encoder_text_inputs_length = tf.placeholder(dtype=tf.int32, shape=[self.config.NUMBER_OF_TEXTUAL_EVIDENCES, None], name='encoder_text_inputs_length')
 
-        # self.batch_size = tf.shape(self.encoder_entities_inputs)[0]
+        self.batch_size = tf.shape(self.encoder_entities_inputs)[0]
 
         # Decoder placeholders:
         # these are the raw inputs to the decoder same as input sequences
