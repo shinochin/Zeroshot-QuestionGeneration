@@ -5,7 +5,6 @@ import pickle
 
 import tensorflow as tf
 import tensorflow_addons as tfa
-from tensorflow.python.layers.core import Dense
 import numpy as np
 
 class TripleText2SeqModel():
@@ -260,7 +259,7 @@ class TripleText2SeqModel():
         self.decoder_cell = tf.keras.layers.GRUCell(self.config.DECODER_RNN_HIDDEN_SIZE)
 
         # fully connected layer to change size of Encoder Last state to Decoder Hidden size
-        decoder_hidden_state_reshape = Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
+        decoder_hidden_state_reshape = tf.keras.layers.Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
 
         self.decoder_initial_state = (decoder_hidden_state_reshape(self.encoder_last_state), )
 
@@ -282,7 +281,7 @@ class TripleText2SeqModel():
         gru = self.__build_single_rnn_cell(self.config.DECODER_RNN_HIDDEN_SIZE)
         self.decoder_cell_list = [gru] * self.config.NUM_LAYERS
 
-        decoder_hidden_state_reshape = Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
+        decoder_hidden_state_reshape = tf.keras.layers.Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
 
         self.decoder_cell_list[-1] = tf.contrib.seq2seq.AttentionWrapper(
             cell=self.decoder_cell_list[-1],
@@ -336,7 +335,7 @@ class TripleText2SeqModel():
         gru = self.__build_single_rnn_cell(self.config.DECODER_RNN_HIDDEN_SIZE)
         self.decoder_cell_list = [gru] * self.config.NUM_LAYERS
 
-        decoder_hidden_state_reshape = Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
+        decoder_hidden_state_reshape = tf.keras.layers.Dense(self.config.DECODER_RNN_HIDDEN_SIZE)
 
         self.decoder_cell_list[-1] = tfa.seq2seq.AttentionWrapper(
             cell=self.decoder_cell_list[-1],
@@ -373,7 +372,7 @@ class TripleText2SeqModel():
 
         # input and output layers to the decoder
         # decoder_input_layer = Dense(self.config.DECODER_RNN_HIDDEN_SIZE, dtype=tf.float32, name='decoder_input_projection')
-        decoder_output_layer = Dense(self.config.DECODER_VOCAB_SIZE, name="decoder_output_projection")
+        decoder_output_layer = tf.keras.layers.Dense(self.config.DECODER_VOCAB_SIZE, name="decoder_output_projection")
 
         if self.config.COUPLE_ENCODER_DECODER_WORD_EMBEDDINGS:
             # connect encoder and decoder word embeddings
