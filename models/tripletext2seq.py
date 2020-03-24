@@ -197,6 +197,7 @@ class TripleText2SeqModel():
 
         # If not bidirectional encoder
         self.encoder_cell = []
+        self.encoder = []
 
         rnn = self.__build_single_rnn_cell(self.config.INPUT_SEQ_RNN_HIDDEN_SIZE)
 
@@ -207,11 +208,14 @@ class TripleText2SeqModel():
 
                 for i in range(self.config.NUMBER_OF_TEXTUAL_EVIDENCES):
 
-                    out, state = tf.keras.layers.RNN(
+                    encoder = tf.keras.layers.RNN(
                         cell=self.encoder_cell[i],
-                        inputs=self.encoder_text_inputs_embedded[i],
-                        sequence_length=self.encoder_text_inputs_length[i],
-                        dtype=tf.float32)
+                        return_sequences=True,
+                        return_state=True,
+                        # sequence_length=self.encoder_text_inputs_length[i],
+                        )
+                    self.encoder.append(encoder)
+                    out, state = encoder(self.encoder_text_inputs_embedded[i])
 
                     self.encoder_text_outputs.append(out)
                     self.encoder_text_last_state.append(tf.squeeze(state, axis=0))
