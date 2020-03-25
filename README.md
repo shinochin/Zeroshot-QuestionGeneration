@@ -51,7 +51,7 @@ How to run zeroshot experiments for unseen-predicates :
 
 **`Our-Model+Copy` full model with textual contexts and copy actions:**
 
-`python run.py -epochs 10 -min 50 -setup zeroshot -criteria pred -fold 1  datapath ./data/copy/ -subtype -objtype -pred`
+`python run.py -epochs 10 -min 50 -setup zeroshot -criteria pred -fold 1  -datapath ./data/copy/ -subtype -objtype -pred`
 
 
 
