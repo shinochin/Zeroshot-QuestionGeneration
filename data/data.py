@@ -264,7 +264,7 @@ class FewShotsDataFeeder:
                     x['dep'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['predicate_phrase'].lower().split())))
                     x['direction'].append(1)
             return x
-        x = read_json_return_list(file)
+        x = read_json_return_dict(file)
         return x
 
     def read_data(self, mode):
