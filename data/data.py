@@ -4,6 +4,8 @@ import math
 import pandas as pd
 import numpy as np
 
+import json
+
 class Data:
     """
     class acts as a convenient data feeder for few shots learning
@@ -198,14 +200,16 @@ class FewShotsDataFeeder:
 
     """
 
-    def __init__(self, datapath=None, seed=3, train_percent=0.7, test_percent=0.2, remove_unk=False):
+    def __init__(self, datapath=None, seed=3, train_percent=0.7, test_percent=0.2, remove_unk=False, kb=None):
 
         assert 0 < train_percent + test_percent <= 1
+        assert kb is not None
 
         self.train_percent = train_percent
         self.test_percent = test_percent
         self.valid_percent = 1 - (train_percent+test_percent)
         self.remove_unk = remove_unk
+        self.kb = kb
 
         if datapath is None:
             datapath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "./preprocessed")
@@ -234,48 +238,73 @@ class FewShotsDataFeeder:
         self.inv_wordvocab = return_inv_vocab(os.path.join(datapath, "word.vocab"))
 
         # loading data files names
-        self.datafile = {"train":os.path.join(datapath, "train.ids"),
-                         "valid": os.path.join(datapath, "valid.ids"),
-                         "test": os.path.join(datapath, "valid.ids")
-                         }
+        if self.kb == 'freebase':
+            self.datafile = {"train": os.path.join(datapath, "train.ids"),
+                             "valid": os.path.join(datapath, "valid.ids"),
+                             "test": os.path.join(datapath, "valid.ids")}
+        elif self.kb == 'wikidata':
+            self.datafile = {"train": os.path.join(datapath, "wikidata_train_answerable.json"),
+                             "valid": os.path.join(datapath, "wikidata_valid_answerable.json"),
+                             "test": os.path.join(datapath, "wikidata_test_answerable.json")}
 
         self.data = {}
 
-    def read_data(self):
-        modes = ["train", "test", "valid"]
-        data = []
-        for m in modes:
-            f = self.datafile[m]
-            data.append(pd.read_csv(f, names=["sub", "pred", "obj", "question", "subtype", "objtype", "dep", "direction", "placeholder_dict"]))
+    def read_json(self, file):
+        def read_json_return_dict(fn, encoding="UTF-8"):
+        	"""
+        		- each line is a json
+        		- without indent
+        	"""
+        	x = {'sub': [], 'pred': [], 'obj': [], 'question': [], 'subtype': [],
+                 'objtype': [], 'dep': [], 'direction': []}
+        	with open(fn, "r", encoding=encoding) as f:
+        		for line in f:
+        			obj = json.loads(line)
+                    x['sub'].append(self.entityvocab.get(obj['triple_ids'][0], 0))
+        			x['pred'].append(self.propertyvocab.get(obj['triple_ids'][1], 0))
+                    x['obj'].append(self.entityvocab.get(obj['triple_ids'][2], 0))
+                    x['question'].append(list(map(lambda y: self.wordvocab.get(y, 0), ['<s>'] + obj['question'].lower().split() + ['</s>'])))
+                    x['subtype'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['subject_type'].lower().split())))
+                    x['objtype'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['object_type'].lower().split())))
+                    x['dep'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['predicate_phrase'].lower().split())))
+                    x['direction'].append(1)
+        	return x
+        x = read_json_return_list(file)
+        return x
 
-        x = pd.concat(data)
+    def read_data(self, mode):
+        f = self.datafile[mode]
+        if self.kb == 'freebase':
+            x = pd.read_csv(f, names=["sub", "pred", "obj", "question", "subtype", "objtype", "dep", "direction", "placeholder_dict"])
 
-        if self.remove_unk:
-            unkdep = self.wordvocab["_UNK_DEP_"] if "_UNK_DEP_" in self.wordvocab else None
-            x = x[x.dep != unkdep]
-            x = x[x.apply(lambda i: str(self.wordvocab["_PLACEHOLDER_SUB_"]) in i['question'].split(), axis=1)]
+            if self.remove_unk:
+                unkdep = self.wordvocab["_UNK_DEP_"] if "_UNK_DEP_" in self.wordvocab else None
+                x = x[x.dep != unkdep]
+                x = x[x.apply(lambda i: str(self.wordvocab["_PLACEHOLDER_SUB_"]) in i['question'].split(), axis=1)]
 
-        x.reset_index(inplace=True)
+            x.reset_index(inplace=True)
 
-        tmp = [[], [], [], []]
-        for l in x.iterrows():
+            tmp = [[], [], [], []]
+            for l in x.iterrows():
 
-            tmp[0].append([int(i) for i in l[1]['question'].split()])
-            tmp[1].append([int(i) for i in l[1]['subtype'].split()])
-            tmp[2].append([int(i) for i in l[1]['objtype'].split()])
-            tmp[3].append([int(i) for i in l[1]['dep'].split()])
+                tmp[0].append([int(i) for i in l[1]['question'].split()])
+                tmp[1].append([int(i) for i in l[1]['subtype'].split()])
+                tmp[2].append([int(i) for i in l[1]['objtype'].split()])
+                tmp[3].append([int(i) for i in l[1]['dep'].split()])
 
-        x['question'] = tmp[0]
-        x['subtype'] = tmp[1]
-        x['objtype'] = tmp[2]
-        x['dep'] = tmp[3]
+            x['question'] = tmp[0]
+            x['subtype'] = tmp[1]
+            x['objtype'] = tmp[2]
+            x['dep'] = tmp[3]
+
+        elif self.kb == 'wikidata':
+            x = self.read_json(mode)
 
         x['question_length'] = x.apply(lambda l: len(l['question']), axis=1)
         x['subtype_length'] = x.apply(lambda l: len(l['subtype']), axis=1)
         x['objtype_length'] = x.apply(lambda l: len(l['objtype']), axis=1)
         x['dep_length'] = x.apply(lambda l: len(l['dep']), axis=1)
         x['triple'] = x.apply(lambda l: [l['sub'], l['pred'], l['obj']], axis=1)
-
         return x
 
     def filter_data(self, x, mode, shot_percentage, min_count):
@@ -306,7 +335,7 @@ class FewShotsDataFeeder:
 
         return keep_ids, x
 
-    def datafeed(self, mode, config, shot_percentage=1, min_count=10, shuffle=True):
+    def datafeed(self, mode, config, shot_percentage=1, min_count=0, shuffle=True):
         """
 
         :param mode: train, valid, test
@@ -318,7 +347,7 @@ class FewShotsDataFeeder:
         :return:
         """
 
-        x = self.read_data()
+        x = self.read_data(mode)
         self.data[mode] = x
 
         dataids, x = self.filter_data(x, mode, shot_percentage, min_count)
@@ -369,7 +398,8 @@ class FewShotsDataFeeder:
                         self.pad(batch['question'].values),
                         batch['question_length'].values,
                         batch['direction'].values,
-                        {"epoch": epoch, "batch_id": bn, "ids": batchids, "placeholder_dict":[eval(i) for i in batch["placeholder_dict"].values]}  # meta info
+                        {"epoch": epoch, "batch_id": bn, "ids": batchids}
+                        # , "placeholder_dict":[eval(i) for i in batch["placeholder_dict"].values]}  # meta info
                     )
 
         if mode == "test" or mode == "valid":
@@ -396,7 +426,8 @@ class FewShotsDataFeeder:
                     self.pad(batch['question'].values),
                     batch['question_length'].values,
                     batch['direction'].values,
-                    {"ids": id, "placeholder_dict": [eval(i) for i in batch["placeholder_dict"].values]}  # meta info
+                    {"ids": id}
+                    # , "placeholder_dict": [eval(i) for i in batch["placeholder_dict"].values]}  # meta info
                 )
 
     def pad(self, x, pad_char=0, max_length=None):
@@ -485,7 +516,7 @@ class ZeroShotsDataFeeder(FewShotsDataFeeder):
         :return:
         """
 
-        x = self.read_data()
+        x = self.read_data(mode)
 
         dataids, x = self.filter_data(x, mode, criteria, min_count, kfold, cv)
         dataids = [i for i in dataids if i in x.index]
@@ -494,6 +525,3 @@ class ZeroShotsDataFeeder(FewShotsDataFeeder):
             np.random.shuffle(dataids)
 
         return self.yield_datafeed(mode, dataids, x, config)
-
-
-
