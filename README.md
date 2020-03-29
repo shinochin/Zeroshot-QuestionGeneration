@@ -54,6 +54,8 @@ How to run zeroshot experiments for unseen-predicates :
 `python run.py -epochs 10 -min 50 -setup zeroshot -criteria pred -fold 1  -datapath ./data/copy/ -subtype -objtype -pred -mode train -kb freebase`
 
 **wikidata**
+`python run.py -epochs 10 -min 50 -setup zeroshot -criteria pred -fold 1 -datapath ./data/wikidata/ -mode train -kb wikidata`
+
 `python run.py -epochs 10 -min 50 -setup zeroshot -criteria pred -fold 1 -datapath ./data/wikidata/ -subtype -objtype -pred -mode train -kb wikidata`
 
 
