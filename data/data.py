@@ -258,10 +258,14 @@ class FewShotsDataFeeder:
                     x['sub'].append(self.entityvocab.get(obj['triple_ids'][0], 0))
                     x['pred'].append(self.propertyvocab.get(obj['triple_ids'][1], 0))
                     x['obj'].append(self.entityvocab.get(obj['triple_ids'][2], 0))
-                    x['question'].append(list(map(lambda y: self.wordvocab.get(y, 0), ['<s>'] + obj['question'].lower().split() + ['</s>'])))
-                    x['subtype'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['subject_type'].lower().split())))
-                    x['objtype'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['object_type'].lower().split())))
-                    x['dep'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['predicate_phrase'].lower().split())))
+                    x['question'].append(list(map(lambda y: self.wordvocab.get(y, 1), ['<s>'] + obj['question'].lower().split() + ['</s>'])))
+                    x['subtype'].append(list(map(lambda y: self.wordvocab.get(y, 1), obj['subject_type'].lower().split())))
+                    x['objtype'].append(list(map(lambda y: self.wordvocab.get(y, 1), obj['object_type'].lower().split())))
+                    dep = obj['predicate_phrase'].lower()
+                    if dep == '':
+                        x['dep'].append([0])
+                    else:
+                        x['dep'].append(list(map(lambda y: self.wordvocab.get(y, 1), dep.split())))
                     x['direction'].append(1)
             return x
         x = read_json_return_dict(file)
