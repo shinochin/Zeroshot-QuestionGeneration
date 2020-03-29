@@ -294,6 +294,8 @@ class FewShotsDataFeeder:
 
         elif self.kb == 'wikidata':
             x = self.read_json(f)
+            x = pd.DataFrame(x)
+            x.reset_index(inplace=True)
 
         x['question_length'] = x.apply(lambda l: len(l['question']), axis=1)
         x['subtype_length'] = x.apply(lambda l: len(l['subtype']), axis=1)
