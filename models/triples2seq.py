@@ -81,10 +81,10 @@ class Triple2SeqModel():
 
             if self.config.USE_PRETRAINED_KB_EMBEDDINGS:
 
-                ent_kb_emb = pickle.load(open(self.config.PRETRAINED_ENTITIES_EMBEDDINGS_PATH))
+                ent_kb_emb = pickle.load(open(self.config.PRETRAINED_ENTITIES_EMBEDDINGS_PATH, 'rb'))
                 self.encoder_entities_embeddings = tf.Variable(ent_kb_emb, name="entities_embeddings", trainable=self.config.TRAIN_KB_EMBEDDINGS)
 
-                pred_kb_emb = pickle.load(open(self.config.PRETRAINED_PREDICATES_EMBEDDINGS_PATH))
+                pred_kb_emb = pickle.load(open(self.config.PRETRAINED_PREDICATES_EMBEDDINGS_PATH, 'rb'))
                 self.encoder_predicates_embeddings = tf.Variable(pred_kb_emb, name="predicates_embeddings",
                                                                trainable=self.config.TRAIN_KB_EMBEDDINGS)
 
