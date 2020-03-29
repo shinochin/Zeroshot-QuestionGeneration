@@ -251,24 +251,19 @@ class FewShotsDataFeeder:
 
     def read_json(self, file):
         def read_json_return_dict(fn, encoding="UTF-8"):
-        	"""
-        		- each line is a json
-        		- without indent
-        	"""
-        	x = {'sub': [], 'pred': [], 'obj': [], 'question': [], 'subtype': [],
-                 'objtype': [], 'dep': [], 'direction': []}
-        	with open(fn, "r", encoding=encoding) as f:
-        		for line in f:
-        			obj = json.loads(line)
+            x = {'sub': [], 'pred': [], 'obj': [], 'question': [], 'subtype': [], 'objtype': [], 'dep': [], 'direction': []}
+            with open(fn, "r", encoding=encoding) as f:
+                for line in f:
+                    obj = json.loads(line)
                     x['sub'].append(self.entityvocab.get(obj['triple_ids'][0], 0))
-        			x['pred'].append(self.propertyvocab.get(obj['triple_ids'][1], 0))
+                    x['pred'].append(self.propertyvocab.get(obj['triple_ids'][1], 0))
                     x['obj'].append(self.entityvocab.get(obj['triple_ids'][2], 0))
                     x['question'].append(list(map(lambda y: self.wordvocab.get(y, 0), ['<s>'] + obj['question'].lower().split() + ['</s>'])))
                     x['subtype'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['subject_type'].lower().split())))
                     x['objtype'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['object_type'].lower().split())))
                     x['dep'].append(list(map(lambda y: self.wordvocab.get(y, 0), obj['predicate_phrase'].lower().split())))
                     x['direction'].append(1)
-        	return x
+            return x
         x = read_json_return_list(file)
         return x
 
