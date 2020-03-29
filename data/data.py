@@ -293,7 +293,7 @@ class FewShotsDataFeeder:
             x['dep'] = tmp[3]
 
         elif self.kb == 'wikidata':
-            x = self.read_json(mode)
+            x = self.read_json(f)
 
         x['question_length'] = x.apply(lambda l: len(l['question']), axis=1)
         x['subtype_length'] = x.apply(lambda l: len(l['subtype']), axis=1)
