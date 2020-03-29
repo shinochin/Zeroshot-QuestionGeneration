@@ -13,7 +13,7 @@ class Config():
         self.TRIPLELENGTH = 3  # (s,p,o) # make 4 to extend to quads
         self.ENTITIESLENGTH = 2
         self.PREDICATESLENGTH = 1
-        self.USE_PRETRAINED_KB_EMBEDDINGS = False
+        self.USE_PRETRAINED_KB_EMBEDDINGS = True
 
         # knowledge base embeddings training params
         if mode == "KBEMBED":
@@ -53,11 +53,11 @@ class Config():
 
             if self.USE_PRETRAINED_KB_EMBEDDINGS:
 
-                self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH = "./checkpoints/transe/ent_embeddings.pkl"
-                self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH = "./checkpoints/transe/rel_embeddings.pkl"
+                self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH = "./checkpoints/transe/Wikidata/ent_embeddings.pkl"
+                self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH = "./checkpoints/transe/Wikidata/rel_embeddings.pkl"
                 # infer size from given pickle file
-                self.ENTITIES_VOCAB, self.ENTITIES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH)).shape
-                self.PREDICATES_VOCAB, self.PREDICATES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH)).shape
+                self.ENTITIES_VOCAB, self.ENTITIES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH, 'rb')).shape
+                self.PREDICATES_VOCAB, self.PREDICATES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH, 'rb')).shape
                 self.TRAIN_KB_EMBEDDINGS = False     # make preloaded embeddings fixed
 
                 # for now has to be the same size as the triples embedding size
@@ -85,7 +85,7 @@ class Config():
 
             if self.USE_PRETRAINED_WORD_EMBEDDINGS:
 
-                self.PRETRAINED_WORD_EMBEDDINGS_PATH = "./data/wordembeddings/glove100d.pkl"
+                self.PRETRAINED_WORD_EMBEDDINGS_PATH = "./data/wordembeddings/wikidata/glove100d.pkl"
                 self.TYPES_ENCODER_VOCAB, self.TYPES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_WORD_EMBEDDINGS_PATH, 'rb')).shape
                 self.TRAIN_WORD_EMBEDDINGS = True
 
