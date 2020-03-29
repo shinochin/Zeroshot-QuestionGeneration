@@ -184,6 +184,10 @@ if args.mode == 'train':
                 print('Saving the model..')
                 checkpoint_path = os.path.join(config.CHECKPOINTS_PATH)
                 path = model.save(sess, checkpoint_path, global_step=model.global_step)
+        print('Saving the model..')
+        checkpoint_path = os.path.join(config.CHECKPOINTS_PATH)
+        path = model.save(sess, checkpoint_path, global_step=model.global_step)
+        print('Finished training')
 
 ###########
 # testing #
