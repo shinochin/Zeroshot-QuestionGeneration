@@ -314,7 +314,27 @@ class FewShotsDataFeeder:
         x = x.groupby("pred").filter(lambda x: len(x) >= min_count)
         ids = x.groupby("pred").indices
 
-        return ids, x
+        keep_ids = np.array([], dtype=np.int)
+        if mode == "train":
+            for v in ids.values():
+                start = 0
+                end = len(v)
+                keep_ids = np.append(keep_ids, v[start:end])
+
+        elif mode == "test":
+            for v in ids.values():
+                start = 0
+                end = len(v)
+                keep_ids = np.append(keep_ids, v[start:end])
+
+        elif mode == "valid":
+
+            for v in ids.values():
+                start = 0
+                end = len(v)
+                keep_ids = np.append(keep_ids, v[start:end])
+
+        return keep_ids, x
 
     def datafeed(self, mode, config, shot_percentage=1, min_count=0, shuffle=True):
         """
@@ -448,7 +468,27 @@ class ZeroShotsDataFeeder(FewShotsDataFeeder):
         ids = x.groupby(criteria_hash).indices
         ids = sorted(ids.items(), key=lambda a: len(a[1]), reverse=True)
 
-        return ids, x
+        keep_ids = np.array([], dtype=np.int)
+        if mode == "train":
+            for v in ids.values():
+                start = 0
+                end = len(v)
+                keep_ids = np.append(keep_ids, v[start:end])
+
+        elif mode == "test":
+            for v in ids.values():
+                start = 0
+                end = len(v)
+                keep_ids = np.append(keep_ids, v[start:end])
+
+        elif mode == "valid":
+
+            for v in ids.values():
+                start = 0
+                end = len(v)
+                keep_ids = np.append(keep_ids, v[start:end])
+
+        return keep_ids, x
 
     def datafeed(self, mode, config, criteria="pred", min_count=10, shuffle=True, kfold=10, cv=1):
         """
