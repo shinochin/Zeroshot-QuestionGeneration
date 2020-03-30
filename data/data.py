@@ -251,7 +251,7 @@ class FewShotsDataFeeder:
 
     def read_json(self, file):
         def read_json_return_dict(fn, encoding="UTF-8"):
-            x = {'sub': [], 'pred': [], 'obj': [], 'question': [], 'subtype': [], 'objtype': [], 'dep': [], 'direction': []}
+            x = {'sub': [], 'pred': [], 'obj': [], 'question': [], 'subtype': [], 'objtype': [], 'dep': [], 'direction': [], 'placeholder_dict': []}
             with open(fn, "r", encoding=encoding) as f:
                 for line in f:
                     obj = json.loads(line)
@@ -267,6 +267,7 @@ class FewShotsDataFeeder:
                     else:
                         x['dep'].append(list(map(lambda y: self.wordvocab.get(y, 1), dep.split())))
                     x['direction'].append(1)
+                    x['placeholder_dict'].append(obj['placeholder_dict'])
             return x
         x = read_json_return_dict(file)
         return x
