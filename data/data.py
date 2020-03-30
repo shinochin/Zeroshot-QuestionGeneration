@@ -400,7 +400,7 @@ class FewShotsDataFeeder:
                         self.pad(batch['question'].values),
                         batch['question_length'].values,
                         batch['direction'].values,
-                        {"epoch": epoch, "batch_id": bn, "ids": batchids, "placeholder_dict":[eval(i) for i in batch["placeholder_dict"].values]}  # meta info
+                        {"epoch": epoch, "batch_id": bn, "ids": batchids, "placeholder_dict": batch["placeholder_dict"].values}  # meta info
                     )
 
         if mode == "test" or mode == "valid":
@@ -427,7 +427,7 @@ class FewShotsDataFeeder:
                     self.pad(batch['question'].values),
                     batch['question_length'].values,
                     batch['direction'].values,
-                    {"ids": id, "placeholder_dict": [eval(i) for i in batch["placeholder_dict"].values]}  # meta info
+                    {"ids": id, "placeholder_dict": batch["placeholder_dict"].values}  # meta info
                 )
 
     def pad(self, x, pad_char=0, max_length=None):
