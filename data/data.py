@@ -451,7 +451,6 @@ class ZeroShotsDataFeeder(FewShotsDataFeeder):
 
     def filter_data(self, x, mode, criteria="pred", min_count=10, kfold=10, cv=0):
         """
-
         :param x:
         :param mode:
         :param criteria:
@@ -469,24 +468,35 @@ class ZeroShotsDataFeeder(FewShotsDataFeeder):
         ids = sorted(ids.items(), key=lambda a: len(a[1]), reverse=True)
 
         keep_ids = np.array([], dtype=np.int)
+
         if mode == "train":
-            for v in ids.values():
-                start = 0
-                end = len(v)
-                keep_ids = np.append(keep_ids, v[start:end])
+
+            start = cv
+            pos = [(i + start) % kfold for i in range(int(math.ceil(kfold * self.train_percent)))]
+
+            for c, i in enumerate(ids):
+                if c % kfold in pos:
+                    keep_ids = np.append(keep_ids, i[1])
 
         elif mode == "test":
-            for v in ids.values():
-                start = 0
-                end = len(v)
-                keep_ids = np.append(keep_ids, v[start:end])
+
+            start = cv
+            start = [(i + start + 1) % kfold for i in range(int(math.ceil(kfold * self.train_percent)))][-1]
+            pos = [(i + start) % kfold for i in range(int(math.ceil(kfold * self.test_percent)))]
+
+            for c, i in enumerate(ids):
+                if c % kfold in pos:
+                    keep_ids = np.append(keep_ids, i[1])
 
         elif mode == "valid":
 
-            for v in ids.values():
-                start = 0
-                end = len(v)
-                keep_ids = np.append(keep_ids, v[start:end])
+            start = cv
+            start = [(i + start + 1) % kfold for i in range(int(math.ceil(kfold * (self.train_percent + self.test_percent))))][-1]
+            pos = [(i + start) % kfold for i in range(int(math.ceil(kfold * self.valid_percent)))]
+
+            for c, i in enumerate(ids):
+                if c % kfold in pos:
+                    keep_ids = np.append(keep_ids, i[1])
 
         return keep_ids, x
 
