@@ -1,10 +1,11 @@
 import json
 import numpy as np
 import pickle
+import argparse
 
 def main(args):
     dir_path = './data/wikidata/'
-    file_names = ['wikidata_test_answerable.json', 'wikidata_train_answerable.json', 'wikidata_valid_answerable.json']
+    file_names = ['wikidata_test_answerable_pos.json', 'wikidata_train_answerable_pos.json', 'wikidata_valid_answerable_pos.json']
     wordcount = {}
     entitycount = {}
     propertycount = {}
