@@ -243,9 +243,9 @@ class FewShotsDataFeeder:
                              "valid": os.path.join(datapath, "valid.ids"),
                              "test": os.path.join(datapath, "valid.ids")}
         elif self.kb == 'wikidata':
-            self.datafile = {"train": os.path.join(datapath, "wikidata_train_answerable.json"),
-                             "valid": os.path.join(datapath, "wikidata_valid_answerable.json"),
-                             "test": os.path.join(datapath, "wikidata_test_answerable.json")}
+            self.datafile = {"train": os.path.join(datapath, "wikidata_train_answerable_pos.json"),
+                             "valid": os.path.join(datapath, "wikidata_valid_answerable_pos.json"),
+                             "test": os.path.join(datapath, "wikidata_test_answerable_pos.json")}
 
         self.data = {}
 
@@ -258,7 +258,7 @@ class FewShotsDataFeeder:
                     x['sub'].append(self.entityvocab.get(obj['triple_ids'][0], 0))
                     x['pred'].append(self.propertyvocab.get(obj['triple_ids'][1], 0))
                     x['obj'].append(self.entityvocab.get(obj['triple_ids'][2], 0))
-                    x['question'].append(list(map(lambda y: self.wordvocab.get(y, 1), ['<s>'] + obj['question'].lower().split() + ['</s>'])))
+                    x['question'].append(list(map(lambda y: self.wordvocab.get(y, 1), ['<s>'] + obj['question'].split() + ['</s>'])))
                     x['subtype'].append(list(map(lambda y: self.wordvocab.get(y, 1), obj['subject_type'].lower().split())))
                     x['objtype'].append(list(map(lambda y: self.wordvocab.get(y, 1), obj['object_type'].lower().split())))
                     dep = obj['predicate_phrase'].lower()
@@ -314,27 +314,7 @@ class FewShotsDataFeeder:
         x = x.groupby("pred").filter(lambda x: len(x) >= min_count)
         ids = x.groupby("pred").indices
 
-        keep_ids = np.array([], dtype=np.int)
-        if mode == "train":
-            for v in ids.values():
-                start = 0
-                end = int(math.ceil(len(v) * shot_percentage * self.train_percent))
-                keep_ids = np.append(keep_ids, v[start:end])
-
-        elif mode == "test":
-            for v in ids.values():
-                start = int(math.ceil(len(v) * shot_percentage * self.train_percent))
-                end = int(start + math.ceil(len(v) * self.test_percent))
-                keep_ids = np.append(keep_ids, v[start:end])
-
-        elif mode == "valid":
-
-            for v in ids.values():
-                start = int(math.ceil(len(v) * shot_percentage * self.train_percent) + math.ceil(len(v) * self.test_percent))
-                end = int(start + math.ceil(len(v) * self.valid_percent))
-                keep_ids = np.append(keep_ids, v[start:end])
-
-        return keep_ids, x
+        return ids, x
 
     def datafeed(self, mode, config, shot_percentage=1, min_count=0, shuffle=True):
         """
@@ -399,8 +379,7 @@ class FewShotsDataFeeder:
                         self.pad(batch['question'].values),
                         batch['question_length'].values,
                         batch['direction'].values,
-                        {"epoch": epoch, "batch_id": bn, "ids": batchids}
-                        # , "placeholder_dict":[eval(i) for i in batch["placeholder_dict"].values]}  # meta info
+                        {"epoch": epoch, "batch_id": bn, "ids": batchids, "placeholder_dict":[eval(i) for i in batch["placeholder_dict"].values]}  # meta info
                     )
 
         if mode == "test" or mode == "valid":
@@ -427,8 +406,7 @@ class FewShotsDataFeeder:
                     self.pad(batch['question'].values),
                     batch['question_length'].values,
                     batch['direction'].values,
-                    {"ids": id}
-                    # , "placeholder_dict": [eval(i) for i in batch["placeholder_dict"].values]}  # meta info
+                    {"ids": id, "placeholder_dict": [eval(i) for i in batch["placeholder_dict"].values]}  # meta info
                 )
 
     def pad(self, x, pad_char=0, max_length=None):
@@ -470,38 +448,7 @@ class ZeroShotsDataFeeder(FewShotsDataFeeder):
         ids = x.groupby(criteria_hash).indices
         ids = sorted(ids.items(), key=lambda a: len(a[1]), reverse=True)
 
-        keep_ids = np.array([], dtype=np.int)
-
-        if mode == "train":
-
-            start = cv
-            pos = [(i + start) % kfold for i in range(int(math.ceil(kfold * self.train_percent)))]
-
-            for c, i in enumerate(ids):
-                if c % kfold in pos:
-                    keep_ids = np.append(keep_ids, i[1])
-
-        elif mode == "test":
-
-            start = cv
-            start = [(i + start + 1) % kfold for i in range(int(math.ceil(kfold * self.train_percent)))][-1]
-            pos = [(i + start) % kfold for i in range(int(math.ceil(kfold * self.test_percent)))]
-
-            for c, i in enumerate(ids):
-                if c % kfold in pos:
-                    keep_ids = np.append(keep_ids, i[1])
-
-        elif mode == "valid":
-
-            start = cv
-            start = [(i + start + 1) % kfold for i in range(int(math.ceil(kfold * (self.train_percent + self.test_percent))))][-1]
-            pos = [(i + start) % kfold for i in range(int(math.ceil(kfold * self.valid_percent)))]
-
-            for c, i in enumerate(ids):
-                if c % kfold in pos:
-                    keep_ids = np.append(keep_ids, i[1])
-
-        return keep_ids, x
+        return ids, x
 
     def datafeed(self, mode, config, criteria="pred", min_count=10, shuffle=True, kfold=10, cv=1):
         """
