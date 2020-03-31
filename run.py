@@ -129,7 +129,7 @@ elif exp_type == "zeroshot":
 
 
 if args.out is None:
-    args.out = "./results/" + model_name + "_%s_Epochs" % config.MAX_EPOCHS + "_%s_cv" % fold + ".csv"
+    args.out = "./results/" + model_name + "_%s_Epochs" % config.MAX_EPOCHS + "_%s_cv" % fold + '_%s' % args.ckpt+ ".csv"
 
 if args.logfile is None:
     args.logfile = "./log/" + model_name + "_%s_Epochs" % config.MAX_EPOCHS + "_%s_cv" % fold + ".log"
