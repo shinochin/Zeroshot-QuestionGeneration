@@ -125,4 +125,4 @@ class Config():
             self.MAX_GRAD_NORM = 0.1
             self.MAX_EPOCHS = 250
             self.LOG_FREQUENCY = 20
-            self.SAVE_FREQUENCY = 200          # save per global step
+            self.SAVE_FREQUENCY = 40          # save per global step
