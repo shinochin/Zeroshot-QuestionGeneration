@@ -31,6 +31,7 @@ parser.add_argument('-log', '--logfile', help='file to log outputs of experiment
 
 parser.add_argument('-mode', '--mode', help='train, test or predict', required=True)
 parser.add_argument('-kb', '--kb', help='name of knowledge base', required=True)
+parser.add_argument('-ckpt', '--ckpt', help='id of checkpoints to be loaded in test mode', required=False)
 
 
 args = parser.parse_args()
@@ -217,10 +218,10 @@ if args.mode == 'test':
 
     with tf.Session() as sess:
 
-        if tf.train.checkpoint_exists(tf.train.latest_checkpoint(os.path.dirname(config.CHECKPOINTS_PATH))):
+        if tf.train.checkpoint_exists(config.CHECKPOINTS_PATH + '-' + args.ckpt):
             print('reloading the trained model')
 
-            model.restore(sess=sess, path=tf.train.latest_checkpoint(os.path.dirname(config.CHECKPOINTS_PATH)))
+            model.restore(sess=sess, path=config.CHECKPOINTS_PATH + '-' + args.ckpt)
 
             predicted = []
             labels = []
