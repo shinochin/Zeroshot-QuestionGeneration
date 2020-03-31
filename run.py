@@ -207,7 +207,8 @@ if args.mode == 'test':
 
 
     def post_process(s, d):
-
+        if isinstance(d, dict):
+            d = d.items()
         d = sorted(d, key=lambda i: len(i[1]))
 
         for v, k in d:
