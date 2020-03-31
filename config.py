@@ -42,8 +42,8 @@ class Config():
             self.TRANSX_EPOCHS = 10000
             self.margin = 1.0
 
-            self.ENTITIES_EMBEDDING_SIZE = 100
-            self.PREDICATES_EMBEDDING_SIZE = 100
+            self.ENTITIES_EMBEDDING_SIZE = 100 # 50 freebase
+            self.PREDICATES_EMBEDDING_SIZE = 100 # 50 freebase
 
             self.LOG_FREQUENCY = 20
             self.SAVE_FREQUENCY = 300
@@ -55,6 +55,8 @@ class Config():
 
                 self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH = "./checkpoints/transe/Wikidata/ent_embeddings.pkl"
                 self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH = "./checkpoints/transe/Wikidata/rel_embeddings.pkl"
+                # self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH = "./checkpoints/transe/ent_embeddings.pkl" # freebase
+                # self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH = "./checkpoints/transe/rel_embeddings.pkl" # freebase
                 # infer size from given pickle file
                 self.ENTITIES_VOCAB, self.ENTITIES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_ENTITIES_EMBEDDINGS_PATH, 'rb')).shape
                 self.PREDICATES_VOCAB, self.PREDICATES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_PREDICATES_EMBEDDINGS_PATH, 'rb')).shape
@@ -86,6 +88,7 @@ class Config():
             if self.USE_PRETRAINED_WORD_EMBEDDINGS:
 
                 self.PRETRAINED_WORD_EMBEDDINGS_PATH = "./data/wordembeddings/wikidata/glove100d.pkl"
+                # self.PRETRAINED_WORD_EMBEDDINGS_PATH = "./data/wordembeddings/glove100d.pkl"  # freebase
                 self.TYPES_ENCODER_VOCAB, self.TYPES_EMBEDDING_SIZE = pickle.load(open(self.PRETRAINED_WORD_EMBEDDINGS_PATH, 'rb')).shape
                 self.TRAIN_WORD_EMBEDDINGS = True
 
